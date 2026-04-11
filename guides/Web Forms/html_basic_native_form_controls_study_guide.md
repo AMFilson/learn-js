@@ -1,4 +1,5 @@
 # 🎛️ Basic Native Form Controls — Exam Study Guide
+
 **Source:** [MDN Web Docs — Basic native form controls](https://developer.mozilla.org/en-US/docs/Learn_web_development/Extensions/Forms/Basic_native_form_controls)
 
 ---
@@ -16,16 +17,26 @@ This article covers the **original set of form controls** — the `<input>` type
 > `<input>` is unique in all of HTML — it is a void element that changes its entire appearance and behaviour based on a single attribute: `type`.
 
 ```html
-<input type="text" />          <!-- single-line text field -->
-<input type="password" />      <!-- masked text field -->
-<input type="hidden" />        <!-- invisible, still submitted -->
-<input type="checkbox" />      <!-- toggle on/off -->
-<input type="radio" />         <!-- pick one from a group -->
-<input type="submit" />        <!-- submit button -->
-<input type="reset" />         <!-- reset button (avoid) -->
-<input type="button" />        <!-- generic JS button -->
-<input type="file" />          <!-- file picker -->
-<input type="image" />         <!-- image submit button -->
+<input type="text" />
+<!-- single-line text field -->
+<input type="password" />
+<!-- masked text field -->
+<input type="hidden" />
+<!-- invisible, still submitted -->
+<input type="checkbox" />
+<!-- toggle on/off -->
+<input type="radio" />
+<!-- pick one from a group -->
+<input type="submit" />
+<!-- submit button -->
+<input type="reset" />
+<!-- reset button (avoid) -->
+<input type="button" />
+<!-- generic JS button -->
+<input type="file" />
+<!-- file picker -->
+<input type="image" />
+<!-- image submit button -->
 ```
 
 **Fallback behaviour:** If a browser doesn't recognise a `type` value, it falls back to `type="text"`. This means new HTML5 types like `type="color"` degrade gracefully to a text field in older browsers.
@@ -74,14 +85,14 @@ This article covers the **original set of form controls** — the `<input>` type
 
 All basic text controls (text, password) share these behaviours:
 
-| Attribute/Feature | What it does |
-|---|---|
-| `readonly` | User **cannot** modify the value, but it **IS** submitted with the form |
-| `disabled` | User cannot modify the value, and it **IS NOT** submitted with the form |
-| `placeholder` | Grey hint text inside the box describing its purpose. Disappears when user types. |
-| `size` | Sets the physical width of the box (in character widths) |
-| `maxlength` | Sets the maximum number of characters the user can enter |
-| `spellcheck` | Enables/disables spell-checking for the field |
+| Attribute/Feature | What it does                                                                      |
+| ----------------- | --------------------------------------------------------------------------------- |
+| `readonly`        | User **cannot** modify the value, but it **IS** submitted with the form           |
+| `disabled`        | User cannot modify the value, and it **IS NOT** submitted with the form           |
+| `placeholder`     | Grey hint text inside the box describing its purpose. Disappears when user types. |
+| `size`            | Sets the physical width of the box (in character widths)                          |
+| `maxlength`       | Sets the maximum number of characters the user can enter                          |
+| `spellcheck`      | Enables/disables spell-checking for the field                                     |
 
 **`readonly` vs. `disabled` — exam-critical distinction:**
 
@@ -111,7 +122,13 @@ Structure recommendation: wrap related checkables in `<fieldset>` + `<legend>`, 
   <ul>
     <li>
       <label for="carrots">Carrots</label>
-      <input type="checkbox" id="carrots" name="vegetable" value="carrots" checked />
+      <input
+        type="checkbox"
+        id="carrots"
+        name="vegetable"
+        value="carrots"
+        checked
+      />
     </li>
     <li>
       <label for="peas">Peas</label>
@@ -122,6 +139,7 @@ Structure recommendation: wrap related checkables in `<fieldset>` + `<legend>`, 
 ```
 
 **Checkbox rules:**
+
 - Related checkboxes **can share the same `name`** (as in the example above).
 - Each one submitted independently: `vegetable=carrots` if checked.
 - `checked` pre-selects on page load.
@@ -129,6 +147,7 @@ Structure recommendation: wrap related checkables in `<fieldset>` + `<legend>`, 
 - A checked checkbox adds `name=value` to submission; an unchecked one adds nothing.
 
 **CSS pseudo-classes:**
+
 - `:default` — matches any checkbox that had `checked` on page load (even if now unchecked).
 - `:checked` — matches any checkbox that is currently checked.
 
@@ -155,6 +174,7 @@ Structure recommendation: wrap related checkables in `<fieldset>` + `<legend>`, 
 ```
 
 **Radio button rules:**
+
 - Buttons in the same group **must share the same `name`** — this is what links them and enforces mutual exclusivity.
 - Only **one** radio in a same-named group can be checked at a time — selecting one auto-unchecks the others.
 - Only the **value of the checked radio** is submitted: `meal=soup`.
@@ -168,13 +188,14 @@ Structure recommendation: wrap related checkables in `<fieldset>` + `<legend>`, 
 
 There are **three button input types** and the **`<button>` element**, which mirrors them:
 
-| Action | `<input>` version | `<button>` version |
-|---|---|---|
-| Submit form | `<input type="submit" value="Submit" />` | `<button type="submit">Submit</button>` |
-| Reset form | `<input type="reset" value="Reset" />` | `<button type="reset">Reset</button>` |
+| Action                 | `<input>` version                          | `<button>` version                        |
+| ---------------------- | ------------------------------------------ | ----------------------------------------- |
+| Submit form            | `<input type="submit" value="Submit" />`   | `<button type="submit">Submit</button>`   |
+| Reset form             | `<input type="reset" value="Reset" />`     | `<button type="reset">Reset</button>`     |
 | No default action (JS) | `<input type="button" value="Click me" />` | `<button type="button">Click me</button>` |
 
 **Why `<button>` is superior:**
+
 - `<input>` is a void element — its label comes from the `value` attribute, which only accepts **plain text**.
 - `<button>` has opening and closing tags — it can contain **full HTML content** (icons, bold text, images).
 
@@ -224,10 +245,14 @@ Use case: interactive image maps ("hot maps") where the click location is meanin
 - File uploads require `method="post"` and `enctype="multipart/form-data"` on the `<form>`.
 
 **Mobile camera capture:**
+
 ```html
-<input type="file" accept="image/*;capture=camera" />    <!-- camera -->
-<input type="file" accept="video/*;capture=camcorder" /> <!-- video -->
-<input type="file" accept="audio/*;capture=microphone" /> <!-- audio -->
+<input type="file" accept="image/*;capture=camera" />
+<!-- camera -->
+<input type="file" accept="video/*;capture=camcorder" />
+<!-- video -->
+<input type="file" accept="audio/*;capture=microphone" />
+<!-- audio -->
 ```
 
 ---
@@ -236,15 +261,16 @@ Use case: interactive image maps ("hot maps") where the click location is meanin
 
 These four attributes apply to virtually all form controls:
 
-| Attribute | What it does | Notes |
-|---|---|---|
-| **`autofocus`** | Automatically focuses this control when the page loads | Only one element on the page should have this |
-| **`disabled`** | Grays out the control, prevents interaction, and **excludes it from form submission** | Also works on `<fieldset>` to disable all controls inside |
-| **`form`** | Associates a control with a `<form>` by the form's `id` | Allows a control to live **outside** the `<form>` element in the HTML |
-| **`name`** | The key in the `name=value` submission pair | Required for a control's data to be submitted |
-| **`value`** | The data submitted for this control | On text inputs: default/current value. On buttons: label text. On radio/checkbox: what gets submitted when checked. |
+| Attribute       | What it does                                                                          | Notes                                                                                                               |
+| --------------- | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| **`autofocus`** | Automatically focuses this control when the page loads                                | Only one element on the page should have this                                                                       |
+| **`disabled`**  | Grays out the control, prevents interaction, and **excludes it from form submission** | Also works on `<fieldset>` to disable all controls inside                                                           |
+| **`form`**      | Associates a control with a `<form>` by the form's `id`                               | Allows a control to live **outside** the `<form>` element in the HTML                                               |
+| **`name`**      | The key in the `name=value` submission pair                                           | Required for a control's data to be submitted                                                                       |
+| **`value`**     | The data submitted for this control                                                   | On text inputs: default/current value. On buttons: label text. On radio/checkbox: what gets submitted when checked. |
 
 **The `form` attribute — frequently overlooked:**
+
 ```html
 <form id="myForm" action="/submit">
   <!-- ... -->
@@ -261,19 +287,27 @@ These four attributes apply to virtually all form controls:
 ### Logic Walkthrough: Checkbox Submission vs. Radio Submission
 
 **Setup:**
+
 ```html
 <!-- CHECKBOX GROUP (same name) -->
-<input type="checkbox" name="vegetable" value="carrots" checked />  <!-- checked -->
-<input type="checkbox" name="vegetable" value="peas" />             <!-- unchecked -->
-<input type="checkbox" name="vegetable" value="cabbage" checked />  <!-- checked -->
+<input type="checkbox" name="vegetable" value="carrots" checked />
+<!-- checked -->
+<input type="checkbox" name="vegetable" value="peas" />
+<!-- unchecked -->
+<input type="checkbox" name="vegetable" value="cabbage" checked />
+<!-- checked -->
 
 <!-- RADIO GROUP (same name, one selected) -->
-<input type="radio" name="meal" value="soup" checked />   <!-- selected -->
-<input type="radio" name="meal" value="curry" />           <!-- not selected -->
-<input type="radio" name="meal" value="pizza" />           <!-- not selected -->
+<input type="radio" name="meal" value="soup" checked />
+<!-- selected -->
+<input type="radio" name="meal" value="curry" />
+<!-- not selected -->
+<input type="radio" name="meal" value="pizza" />
+<!-- not selected -->
 ```
 
 **Submitted data:**
+
 ```
 vegetable=carrots    ← checked checkbox → submitted
                      ← unchecked "peas" → NOT submitted
@@ -297,6 +331,7 @@ meal=soup            ← the one selected radio → submitted
 ```
 
 **After click — URL produced:**
+
 ```
 /submit?field_a=ReadOnly+value
 ```
@@ -338,36 +373,36 @@ The `name` attribute (`pos`) is used as the prefix for both coordinate pairs. Th
 
 ## Key Terminology Bank
 
-| Term | Exam-Ready Definition |
-|---|---|
-| **`type` attribute** | On `<input>`, determines the entire appearance and behaviour of the control. The most important attribute on `<input>`. Falls back to `text` if unrecognised. |
-| **`type="text"`** | Default `<input>` type. Single-line, accepts any text. Strips line breaks before submission. |
-| **`type="password"`** | Masks input with dots/asterisks. UI-only feature — data still sent as plain text unless HTTPS is used. |
-| **`type="hidden"`** | Invisible form control. Submitted with the form. Used for server metadata. Must not have a `<label>`. |
-| **`type="checkbox"`** | Toggle control. Only submitted when checked. If checked with no `value`, submits `name=on`. |
-| **`type="radio"`** | One-of-many selector. Buttons with the same `name` form a mutual exclusivity group. Only the checked one submits. |
-| **`type="submit"`** | Button that submits the form. Equivalent to `<button type="submit">`. |
-| **`type="reset"`** | Button that resets all form fields to defaults. Avoid — causes accidental data loss. |
-| **`type="button"`** | Generic button with no default behaviour. Requires JavaScript. |
-| **`type="file"`** | Opens native OS file picker. Use `accept` to filter types and `multiple` to allow multiple files. |
-| **`type="image"`** | Image that acts as submit button. Submits click coordinates (`name.x` and `name.y`) instead of a value. |
-| **`readonly`** | Prevents user editing the value. Value IS still submitted. Different from `disabled`. |
-| **`disabled`** | Prevents interaction AND excludes the control from form submission. Can be applied to `<fieldset>`. |
-| **`placeholder`** | Grey hint text in the field that disappears when the user starts typing. Not submitted as a value. |
-| **`size`** | Sets the visible width of a text input in character units. Does not limit input length. |
-| **`maxlength`** | Sets the maximum number of characters a user can type into a text input. |
-| **`spellcheck`** | Enables/disables spell-checking on a text input. |
-| **`checked`** | Boolean attribute. Pre-selects a checkbox or radio button when the page loads. |
-| **`autofocus`** | Automatically moves keyboard focus to this control when the page loads. Only one per page. |
-| **`form`** | Associates a control with a specific `<form>` by its `id`. Allows the control to live outside `<form>` tags. |
-| **`accept`** | On `type="file"`. Restricts which file types appear in the picker (e.g., `image/*`, `.pdf`). |
-| **`multiple`** | On `type="file"`. Allows the user to select more than one file. |
-| **Checkable item** | A form control whose state changes by clicking: checkboxes and radio buttons. |
-| **Void element** | Element with no content and no closing tag. `<input>` is void — label text goes in `value`, not between tags. |
-| **`:default` pseudo-class** | Matches form controls that were checked/selected at page load (via `checked` attribute). |
-| **`:checked` pseudo-class** | Matches form controls that are currently checked/selected. |
-| **Hot map** | A use case for `type="image"` — submitting click coordinates to identify a location on an image. |
-| **`name=on` default** | What a checked checkbox submits when no `value` attribute is set: `name=on`. |
+| Term                        | Exam-Ready Definition                                                                                                                                         |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`type` attribute**        | On `<input>`, determines the entire appearance and behaviour of the control. The most important attribute on `<input>`. Falls back to `text` if unrecognised. |
+| **`type="text"`**           | Default `<input>` type. Single-line, accepts any text. Strips line breaks before submission.                                                                  |
+| **`type="password"`**       | Masks input with dots/asterisks. UI-only feature — data still sent as plain text unless HTTPS is used.                                                        |
+| **`type="hidden"`**         | Invisible form control. Submitted with the form. Used for server metadata. Must not have a `<label>`.                                                         |
+| **`type="checkbox"`**       | Toggle control. Only submitted when checked. If checked with no `value`, submits `name=on`.                                                                   |
+| **`type="radio"`**          | One-of-many selector. Buttons with the same `name` form a mutual exclusivity group. Only the checked one submits.                                             |
+| **`type="submit"`**         | Button that submits the form. Equivalent to `<button type="submit">`.                                                                                         |
+| **`type="reset"`**          | Button that resets all form fields to defaults. Avoid — causes accidental data loss.                                                                          |
+| **`type="button"`**         | Generic button with no default behaviour. Requires JavaScript.                                                                                                |
+| **`type="file"`**           | Opens native OS file picker. Use `accept` to filter types and `multiple` to allow multiple files.                                                             |
+| **`type="image"`**          | Image that acts as submit button. Submits click coordinates (`name.x` and `name.y`) instead of a value.                                                       |
+| **`readonly`**              | Prevents user editing the value. Value IS still submitted. Different from `disabled`.                                                                         |
+| **`disabled`**              | Prevents interaction AND excludes the control from form submission. Can be applied to `<fieldset>`.                                                           |
+| **`placeholder`**           | Grey hint text in the field that disappears when the user starts typing. Not submitted as a value.                                                            |
+| **`size`**                  | Sets the visible width of a text input in character units. Does not limit input length.                                                                       |
+| **`maxlength`**             | Sets the maximum number of characters a user can type into a text input.                                                                                      |
+| **`spellcheck`**            | Enables/disables spell-checking on a text input.                                                                                                              |
+| **`checked`**               | Boolean attribute. Pre-selects a checkbox or radio button when the page loads.                                                                                |
+| **`autofocus`**             | Automatically moves keyboard focus to this control when the page loads. Only one per page.                                                                    |
+| **`form`**                  | Associates a control with a specific `<form>` by its `id`. Allows the control to live outside `<form>` tags.                                                  |
+| **`accept`**                | On `type="file"`. Restricts which file types appear in the picker (e.g., `image/*`, `.pdf`).                                                                  |
+| **`multiple`**              | On `type="file"`. Allows the user to select more than one file.                                                                                               |
+| **Checkable item**          | A form control whose state changes by clicking: checkboxes and radio buttons.                                                                                 |
+| **Void element**            | Element with no content and no closing tag. `<input>` is void — label text goes in `value`, not between tags.                                                 |
+| **`:default` pseudo-class** | Matches form controls that were checked/selected at page load (via `checked` attribute).                                                                      |
+| **`:checked` pseudo-class** | Matches form controls that are currently checked/selected.                                                                                                    |
+| **Hot map**                 | A use case for `type="image"` — submitting click coordinates to identify a location on an image.                                                              |
+| **`name=on` default**       | What a checked checkbox submits when no `value` attribute is set: `name=on`.                                                                                  |
 
 ---
 
@@ -377,7 +412,7 @@ The `name` attribute (`pos`) is used as the prefix for both coordinate pairs. Th
 
 2. **`readonly` submits; `disabled` does not.** This is a favourite exam trick. A `readonly` field sends its value to the server. A `disabled` field is completely excluded from submission, as though it doesn't exist.
 
-3. **Radio buttons only work as a mutually exclusive group when they share the same `name`.**  If you accidentally give two radio buttons different `name` values, they become two independent toggles — both can be "selected" simultaneously. The `name` is the group identifier.
+3. **Radio buttons only work as a mutually exclusive group when they share the same `name`.** If you accidentally give two radio buttons different `name` values, they become two independent toggles — both can be "selected" simultaneously. The `name` is the group identifier.
 
 4. **If no radio button in a group is checked, no value is sent at all.** The entire group produces no output. This is an "unknown/unselected" state — plan for it server-side. Always add `checked` to a sensible default to prevent this.
 
@@ -389,7 +424,7 @@ The `name` attribute (`pos`) is used as the prefix for both coordinate pairs. Th
 
 8. **`<button>` inside `<form>` defaults to `type="submit"`.** Even without an explicit `type`. If you want a non-submitting button inside a form (for JS), you MUST write `type="button"`.
 
-9. **`<input type="reset">` clears ALL fields instantly and irreversibly.**  There is no undo. Avoid it on any form where data entry takes effort. Users who accidentally click it lose all their work.
+9. **`<input type="reset">` clears ALL fields instantly and irreversibly.** There is no undo. Avoid it on any form where data entry takes effort. Users who accidentally click it lose all their work.
 
 10. **`placeholder` is NOT a default value.** It's hint text — it disappears when the user types and is never submitted. Do not use placeholder as a substitute for a proper `<label>`.
 
@@ -414,9 +449,11 @@ The `name` attribute (`pos`) is used as the prefix for both coordinate pairs. Th
 **Q3.** Explain radio button grouping. What makes multiple radio buttons into a mutually exclusive group? What happens if none are selected when the form is submitted?
 
 **Q4.** A developer adds a checkbox like this:
+
 ```html
 <input type="checkbox" name="newsletter" checked />
 ```
+
 The checkbox is checked when the user submits. What is submitted to the server? If the user unchecks it before submitting, what is submitted?
 
 **Q5.** Compare `<input type="submit">` to `<button type="submit">`. What is the key reason `<button>` is preferred? Demonstrate with a code example showing something `<button>` can do that `<input>` cannot.
@@ -430,15 +467,18 @@ The checkbox is checked when the user submits. What is submitted to the server? 
 **A1.** The ten `<input>` types, grouped:
 
 **Text inputs (single-line):**
+
 - `text` — basic single-line, any text, default type
 - `password` — masked single-line text field
 - `hidden` — invisible, still submitted, for metadata
 
 **Checkable inputs:**
+
 - `checkbox` — independent toggle (on/off)
 - `radio` — mutually exclusive (one-of-group)
 
 **Button inputs:**
+
 - `submit` — submits form
 - `reset` — resets all fields (avoid)
 - `button` — no action, JS-powered
@@ -462,6 +502,7 @@ The checkbox is checked when the user submits. What is submitted to the server? 
 ```
 
 **After click — URL produced:**
+
 ```
 /submit?ro_field=Visible+and+sent
 ```
