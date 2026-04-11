@@ -543,3 +543,26 @@ console.log(arrayExample6.sort()) /* prints
   sayHello: [Function: sayHello],
   city: 'Toronto'
 }*/
+
+/* Q3. Given the array ["Manchester", "Liverpool", "Edinburgh", "Carlisle"], 
+write the code to safely remove "Liverpool" using indexOf() and splice(). */
+const idx = cities.indexOf("Liverpool")
+splice(idx,1)
+
+const cities = ["Manchester", "Liverpool", "Edinburgh", "Carlisle"];
+const index = cities.indexOf("Liverpool"); // 1
+if (index !== -1) {
+  cities.splice(index, 1);
+}
+// cities → ["Manchester", "Edinburgh", "Carlisle"]
+/* The !== -1 guard prevents accidentally calling splice(-1, 1) which would remove the last element. */
+
+/* Q5. You receive the string "apple,banana,cherry". Write the code to: (a) split it into an array, 
+(b) find the length of the array, and 
+(c) join it back into a string using " | " as the separator. */
+
+const fruitSentence = "apple,banana,cherry"
+const fruitArray = fruitSentence.split(",")
+console.log(fruitArray.length)
+const newSentence = fruitArray.join("|")
+console.log(newSentence)
