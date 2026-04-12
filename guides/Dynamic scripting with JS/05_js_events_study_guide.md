@@ -227,7 +227,7 @@ btn.onclick = () => {
 
 
 // ── METHOD 3: Inline HTML attribute ── NEVER USE ──────────────────
-// <button onclick="doSomething()">Click</button>
+   <button onclick="doSomething()">Click</button>
 // ❌ Mixes HTML and JS
 // ❌ Doesn't scale
 // ❌ Security risk — many servers block it

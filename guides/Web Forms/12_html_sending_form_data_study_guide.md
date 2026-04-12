@@ -1,4 +1,5 @@
-# 📚 Sending Form Data — Exam Study Guide
+<!-- # 📚 Sending Form Data — Exam Study Guide -->
+
 **Source:** [MDN Web Docs — Sending and retrieving form data](https://developer.mozilla.org/en-US/docs/Learn_web_development/Extensions/Forms/Sending_and_retrieving_form_data)
 
 ---
@@ -55,11 +56,13 @@ The `method` attribute determines which **HTTP method** is used for the request.
 ```
 
 **Result URL after submit:**
+
 ```
 https://www.example.com/greet?say=Hi&to=Mom
 ```
 
 **HTTP request structure:**
+
 ```
 GET /?say=Hi&to=Mom HTTP/2.0
 Host: example.com
@@ -71,6 +74,7 @@ Host: example.com
 - The submitted data is **visible in the browser's address bar**, in server logs, and in browser history.
 
 **Use GET when:**
+
 - Fetching/retrieving data (search queries, filters).
 - Idempotence is expected — same request can safely be repeated.
 - The data is not sensitive.
@@ -86,6 +90,7 @@ Host: example.com
 ```
 
 **HTTP request structure:**
+
 ```
 POST / HTTP/2.0
 Host: example.com
@@ -101,6 +106,7 @@ say=Hi&to=Mom
 - `Content-Length` tells the server how many bytes the body contains.
 
 **Use POST when:**
+
 - Modifying data on the server (creating, updating, deleting).
 - Sending sensitive data (passwords, payment info).
 - Sending large amounts of data (URL length is browser/server limited).
@@ -109,22 +115,23 @@ say=Hi&to=Mom
 
 ### 4. GET vs. POST — Side-by-Side Comparison
 
-| Feature | GET | POST |
-|---|---|---|
-| Data location | URL query string | HTTP request body |
-| Visible to user | Yes (address bar, history, logs) | No |
-| Body | Empty | Contains form data |
-| Sensitive data | ❌ Never | ✅ Appropriate (with HTTPS) |
-| Large payloads | ❌ URL length limits apply | ✅ No practical limit |
-| Idempotent | Yes (safe to repeat) | No (may cause side-effects) |
-| Cacheable | Yes | No |
-| Browser "Back" button | Safe to revisit | Shows "resubmit?" dialog |
+| Feature               | GET                              | POST                        |
+| --------------------- | -------------------------------- | --------------------------- |
+| Data location         | URL query string                 | HTTP request body           |
+| Visible to user       | Yes (address bar, history, logs) | No                          |
+| Body                  | Empty                            | Contains form data          |
+| Sensitive data        | ❌ Never                         | ✅ Appropriate (with HTTPS) |
+| Large payloads        | ❌ URL length limits apply       | ✅ No practical limit       |
+| Idempotent            | Yes (safe to repeat)             | No (may cause side-effects) |
+| Cacheable             | Yes                              | No                          |
+| Browser "Back" button | Safe to revisit                  | Shows "resubmit?" dialog    |
 
 ---
 
 ### 5. Viewing HTTP Requests in DevTools
 
 HTTP requests are not shown to the user by default. To inspect them:
+
 1. Open **Developer Tools** (F12).
 2. Go to the **Network** tab.
 3. Select **All**.
@@ -176,13 +183,13 @@ def hello():
 
 Writing raw server-side code to handle forms is possible but uncommon. Most production applications use frameworks that abstract HTTP parsing:
 
-| Language | Common Frameworks |
-|---|---|
-| Python | Django, Flask, web2py, py4web |
-| Node.js | Express, Next.js, Nuxt, Remix |
-| PHP | Laravel, Symfony, Laminas |
-| Ruby | Ruby on Rails |
-| Java | Spring Boot |
+| Language | Common Frameworks             |
+| -------- | ----------------------------- |
+| Python   | Django, Flask, web2py, py4web |
+| Node.js  | Express, Next.js, Nuxt, Remix |
+| PHP      | Laravel, Symfony, Laminas     |
+| Ruby     | Ruby on Rails                 |
+| Java     | Spring Boot                   |
 
 ---
 
@@ -191,7 +198,11 @@ Writing raw server-side code to handle forms is possible but uncommon. Most prod
 Files are **binary data**; standard form encoding treats all data as text. Three specific requirements apply:
 
 ```html
-<form method="post" action="https://example.com/upload" enctype="multipart/form-data">
+<form
+  method="post"
+  action="https://example.com/upload"
+  enctype="multipart/form-data"
+>
   <label for="file">Choose a file</label>
   <input type="file" id="file" name="myFile" />
   <button>Send the file</button>
@@ -212,11 +223,11 @@ Without all three, file content is **not actually uploaded** — only the filena
 
 `enctype` sets the value of the `Content-Type` HTTP header sent with the request body.
 
-| `enctype` Value | When to Use | Effect |
-|---|---|---|
-| `application/x-www-form-urlencoded` | **Default** — all non-file forms | Values URL-encoded as `key=value&key2=value2` |
-| `multipart/form-data` | **Required for file uploads** | Body split into sections; binary data preserved |
-| `text/plain` | Debugging only; not for production | Data sent as plain text; no encoding |
+| `enctype` Value                     | When to Use                        | Effect                                          |
+| ----------------------------------- | ---------------------------------- | ----------------------------------------------- |
+| `application/x-www-form-urlencoded` | **Default** — all non-file forms   | Values URL-encoded as `key=value&key2=value2`   |
+| `multipart/form-data`               | **Required for file uploads**      | Body split into sections; binary data preserved |
+| `text/plain`                        | Debugging only; not for production | Data sent as plain text; no encoding            |
 
 ---
 
@@ -235,6 +246,7 @@ HTML forms are by far the most common **server attack vector**. The vulnerabilit
 3. **Sandbox uploaded files** — Store uploaded files on a separate server or subdomain. Never serve them from the same origin. Grant access only through a distinct domain, preventing execution in your app's context.
 
 **Common attack types (referenced):**
+
 - **XSS (Cross-Site Scripting):** Injecting malicious JavaScript into displayed form data.
 - **SQL Injection:** Inserting SQL commands into form fields to manipulate the database.
 - **File upload abuse:** Uploading executable files disguised as images.
@@ -248,6 +260,7 @@ HTML forms are by far the most common **server attack vector**. The vulnerabilit
 ### Logic Walkthrough: GET Form Submission
 
 **Setup:**
+
 ```html
 <form action="https://www.example.com/greet" method="GET">
   <input name="say" value="Hi" />
@@ -268,6 +281,7 @@ HTML forms are by far the most common **server attack vector**. The vulnerabilit
 8. Server returns a response; browser loads the new page.
 
 **Raw HTTP request:**
+
 ```
 GET /greet?say=Hi&to=Mom HTTP/2.0
 Host: www.example.com
@@ -291,6 +305,7 @@ Host: www.example.com
 8. Returns a response.
 
 **Raw HTTP request:**
+
 ```
 POST /greet HTTP/2.0
 Host: www.example.com
@@ -313,6 +328,7 @@ say=Hi&to=Mom
 ```
 
 **Raw HTTP request structure:**
+
 ```
 POST /upload HTTP/2.0
 Host: example.com
@@ -338,28 +354,28 @@ Content-Type: image/jpeg
 
 ## Key Terminology Bank
 
-| Term | Exam-Ready Definition |
-|---|---|
-| **`action`** | `<form>` attribute that specifies the URL to which form data is submitted; defaults to the current page's URL if omitted. |
-| **`method`** | `<form>` attribute specifying the HTTP method (`GET` or `POST`) used to transmit form data to the server. |
-| **`enctype`** | `<form>` attribute setting the `Content-Type` header of the request body; required to be `multipart/form-data` for file uploads. |
-| **GET method** | HTTP method that appends form data as a query string to the URL; body is empty; data is visible in the address bar and logs. |
-| **POST method** | HTTP method that places form data in the HTTP request body; URL remains unchanged; data is not visible in the address bar. |
-| **Query string** | The `?key=value&key2=value2` portion appended to a URL when data is submitted via GET. |
-| **`application/x-www-form-urlencoded`** | The default `enctype`; encodes form data as URL-encoded key/value pairs separated by `&`. |
-| **`multipart/form-data`** | `enctype` value required for file uploads; splits the request body into separately encoded parts for each field and file. |
-| **`Content-Type` header** | HTTP header that tells the server the format of the request body (set by `enctype` on forms). |
-| **`Content-Length` header** | HTTP header indicating the byte size of the request body; set by the browser automatically on POST requests. |
-| **Client/server architecture** | The web model where a client (browser) sends HTTP requests and a server (Apache, Nginx, etc.) responds using the same protocol. |
-| **`$_POST` (PHP)** | PHP superglobal array automatically populated with key/value pairs from a POST request body. |
-| **`$_GET` (PHP)** | PHP superglobal array automatically populated with key/value pairs from the URL query string. |
-| **`request.form` (Flask)** | Flask's dict-like object containing POST body data, accessed by field name. |
-| **`htmlspecialchars()` (PHP)** | PHP function that converts special HTML characters to their entity equivalents, preventing XSS injection. |
-| **XSS (Cross-Site Scripting)** | A security attack where malicious JavaScript is injected into displayed content via unsanitised form inputs. |
-| **SQL Injection** | A security attack where SQL commands are embedded in form field values to manipulate a database. |
-| **Sanitisation** | The server-side process of cleaning and validating all incoming data before processing or storing it. |
-| **Boundary string** | A randomly generated delimiter separating parts of a `multipart/form-data` request body. |
-| **Idempotent** | A property of HTTP methods (like GET) where repeating the same request produces the same result without side-effects. |
+| Term                                    | Exam-Ready Definition                                                                                                            |
+| --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| **`action`**                            | `<form>` attribute that specifies the URL to which form data is submitted; defaults to the current page's URL if omitted.        |
+| **`method`**                            | `<form>` attribute specifying the HTTP method (`GET` or `POST`) used to transmit form data to the server.                        |
+| **`enctype`**                           | `<form>` attribute setting the `Content-Type` header of the request body; required to be `multipart/form-data` for file uploads. |
+| **GET method**                          | HTTP method that appends form data as a query string to the URL; body is empty; data is visible in the address bar and logs.     |
+| **POST method**                         | HTTP method that places form data in the HTTP request body; URL remains unchanged; data is not visible in the address bar.       |
+| **Query string**                        | The `?key=value&key2=value2` portion appended to a URL when data is submitted via GET.                                           |
+| **`application/x-www-form-urlencoded`** | The default `enctype`; encodes form data as URL-encoded key/value pairs separated by `&`.                                        |
+| **`multipart/form-data`**               | `enctype` value required for file uploads; splits the request body into separately encoded parts for each field and file.        |
+| **`Content-Type` header**               | HTTP header that tells the server the format of the request body (set by `enctype` on forms).                                    |
+| **`Content-Length` header**             | HTTP header indicating the byte size of the request body; set by the browser automatically on POST requests.                     |
+| **Client/server architecture**          | The web model where a client (browser) sends HTTP requests and a server (Apache, Nginx, etc.) responds using the same protocol.  |
+| **`$_POST` (PHP)**                      | PHP superglobal array automatically populated with key/value pairs from a POST request body.                                     |
+| **`$_GET` (PHP)**                       | PHP superglobal array automatically populated with key/value pairs from the URL query string.                                    |
+| **`request.form` (Flask)**              | Flask's dict-like object containing POST body data, accessed by field name.                                                      |
+| **`htmlspecialchars()` (PHP)**          | PHP function that converts special HTML characters to their entity equivalents, preventing XSS injection.                        |
+| **XSS (Cross-Site Scripting)**          | A security attack where malicious JavaScript is injected into displayed content via unsanitised form inputs.                     |
+| **SQL Injection**                       | A security attack where SQL commands are embedded in form field values to manipulate a database.                                 |
+| **Sanitisation**                        | The server-side process of cleaning and validating all incoming data before processing or storing it.                            |
+| **Boundary string**                     | A randomly generated delimiter separating parts of a `multipart/form-data` request body.                                         |
+| **Idempotent**                          | A property of HTTP methods (like GET) where repeating the same request produces the same result without side-effects.            |
 
 ---
 
@@ -442,14 +458,17 @@ Content-Type: image/jpeg
 **Setup:** A form with `name="say" value="Hi"` and `name="to" value="Mom"`, submitted to `https://example.com/greet`.
 
 **GET request:**
+
 ```
 GET /greet?say=Hi&to=Mom HTTP/2.0
 Host: example.com
 ```
+
 - Data is in the URL query string, visible in the address bar.
 - Request body is empty.
 
 **POST request:**
+
 ```
 POST /greet HTTP/2.0
 Host: example.com
@@ -458,6 +477,7 @@ Content-Length: 13
 
 say=Hi&to=Mom
 ```
+
 - URL remains `/greet` — no query string.
 - Data is in the request body.
 - `Content-Type` declares the encoding format.
@@ -476,6 +496,7 @@ The three mandatory requirements for a working file upload:
 3. **`<input type="file">`** inside the form — Provides the browser UI to select a file and attach it to the request.
 
 **If any one is missing:**
+
 - No `method="post"` → Browser uses GET; file data cannot be placed in a URL; at best, only the filename is sent.
 - No `enctype="multipart/form-data"` → File content is URL-encoded and corrupted; server receives garbled binary data or just the filename.
 - No `<input type="file">` → No file is attached to the request at all.
