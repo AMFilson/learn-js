@@ -87,30 +87,6 @@ def parse_quiz_markdown(markdown_text: str) -> List[QuizQuestion]:
         number = int(header_match.group(1))
         title = header_match.group(2).strip()
 
-        option_matches = list(OPTION_RE.finditer(block))
-        if len(option_matches) < 4:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Question {number}: expected 4 options formatted as - A), - B), - C), - D).",
-            )
-
-        option_letters = [m.group(1).upper() for m in option_matches]
-        expected_letters = ["A", "B", "C", "D"]
-        if option_letters[:4] != expected_letters:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Question {number}: options must start in order: A, B, C, D.",
-            )
-
-        options = [
-            QuizOption(letter=m.group(1).upper(), text=m.group(2).strip())
-            for m in option_matches[:4]
-        ]
-
-        body_start = header_match.end()
-        body_end = option_matches[0].start()
-        body_markdown = block[body_start:body_end].strip()
-
         hint_match = HINT_RE.search(block)
         if not hint_match:
             raise HTTPException(
@@ -120,6 +96,39 @@ def parse_quiz_markdown(markdown_text: str) -> List[QuizQuestion]:
                     "<details><summary><b>Hint</b></summary>...</details>."
                 ),
             )
+
+        # Only parse options before the hint block so rationale bullets are not treated as choices.
+        option_section = block[: hint_match.start()]
+        option_matches = list(OPTION_RE.finditer(option_section))
+        option_count = len(option_matches)
+        if option_count not in (2, 4):
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    f"Question {number}: expected either 2 options (- A), - B)) "
+                    "or 4 options (- A), - B), - C), - D))."
+                ),
+            )
+
+        option_letters = [m.group(1).upper() for m in option_matches]
+        expected_letters = ["A", "B"] if option_count == 2 else ["A", "B", "C", "D"]
+        if option_letters != expected_letters:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    f"Question {number}: options must be in order: "
+                    f"{', '.join(expected_letters)}."
+                ),
+            )
+
+        options = [
+            QuizOption(letter=m.group(1).upper(), text=m.group(2).strip())
+            for m in option_matches
+        ]
+
+        body_start = header_match.end()
+        body_end = option_matches[0].start()
+        body_markdown = block[body_start:body_end].strip()
         hint_markdown = hint_match.group(1).strip()
 
         answer_block_match = ANSWER_BLOCK_RE.search(block)
@@ -141,6 +150,14 @@ def parse_quiz_markdown(markdown_text: str) -> List[QuizQuestion]:
                 detail=f"Question {number}: missing '**Correct Answer:** [Letter]' in answer block.",
             )
         correct_answer = correct_answer_match.group(1).upper()
+        if correct_answer not in option_letters:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    f"Question {number}: correct answer '{correct_answer}' is not present in options "
+                    f"({', '.join(option_letters)})."
+                ),
+            )
 
         rationale_section_match = RATIONALE_SECTION_RE.search(answer_block_content)
         if not rationale_section_match:
