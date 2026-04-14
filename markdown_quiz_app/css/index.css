@@ -104,9 +104,10 @@ header {
   border: none;
   padding: 0 16px;
   font-family: var(--font-mono);
-  font-size: 1rem;
+  font-size: 0.95rem;
   outline: none;
-  color: var(--bg-dark);
+  color: var(--border-dark);
+  min-width: 0;
 }
 
 .url-input:disabled {

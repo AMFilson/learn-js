@@ -120,10 +120,15 @@
             body: JSON.stringify({ url: url, subject: "General" })
         });
         
+        const data = await response.json();
         if (!response.ok) {
+            const errorMsg = data.detail || response.statusText;
             const errCard = document.createElement('div');
             errCard.className = 'card';
-            errCard.innerHTML = `<div class="card-body" style="color: #ff4444;">API Error: ${response.statusText}</div>`;
+            errCard.innerHTML = `
+                <div class="card-header"><div class="circle-num" style="background:#ff4444;">!</div><div class="card-title" style="color:#ff4444;">API ERROR</div></div>
+                <div class="card-body" style="color: #ff4444; font-family: var(--font-mono); font-size: 0.85rem;">[ ERROR_LOG ]:<br>${errorMsg}</div>
+            `;
             guideContent.innerHTML = '';
             guideContent.appendChild(errCard);
             btnGenerateGuide.disabled = false;
@@ -132,7 +137,6 @@
             return;
         }
         
-        const data = await response.json();
         renderGuide(data);
       } catch (e) {
           guideContent.innerHTML = `<div class="card"><div class="card-body" style="color: #ff4444;">Network Error: ${e.message}</div></div>`;
@@ -190,14 +194,23 @@
             body: JSON.stringify({ url: url, subject: "General" })
         });
         
+        const data = await response.json();
         if (!response.ok) {
-            quizContent.innerHTML = `<div class="card-body" style="color: #ff4444;">API Error: ${response.statusText}</div>`;
+            const errorMsg = data.detail || response.statusText;
+            quizContent.innerHTML = `
+                <div class="quiz-question-box" style="background:#ffdddd; color:#aa0000; border-color:#aa0000;">
+                    SYSTEM ERROR: QUIZ GENERATION FAILED
+                </div>
+                <div class="card-body" style="color: #ff4444; font-family: var(--font-mono); font-size: 0.85rem;">
+                    [ ERROR_LOG ]:<br>${errorMsg}
+                </div>
+            `;
             btnBuildQuiz.disabled = false;
             sessionState.textContent = "ERROR";
             return;
         }
         
-        activeQuizData = await response.json();
+        activeQuizData = data;
         currentQuestionIndex = 0;
         renderQuizQuestion();
       } catch (e) {
