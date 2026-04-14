@@ -82,6 +82,12 @@
       border-radius: var(--radius-md);
       background: linear-gradient(180deg, #f0f9ff, #ffffff);
       padding: 26px;
+      min-height: 128px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
       text-align: center;
       transition: border-color var(--duration), transform var(--duration), box-shadow var(--duration);
       cursor: pointer;
@@ -98,12 +104,20 @@
       display: block;
       font-size: 1.1rem;
       color: #0c4a6e;
-      margin-bottom: 6px;
+      margin: 0;
+      max-width: 100%;
+      overflow-wrap: anywhere;
     }
 
     .upload-zone span {
       color: var(--muted);
       font-size: 0.95rem;
+      max-width: 100%;
+      overflow-wrap: anywhere;
+    }
+
+    .upload-zone input[type="file"] {
+      display: none !important;
     }
 
     .status {
@@ -225,6 +239,34 @@
       accent-color: var(--primary);
     }
 
+    .option-content {
+      width: 100%;
+    }
+
+    .option-content p {
+      margin: 0 0 8px;
+      line-height: 1.5;
+    }
+
+    .option-content p:last-child {
+      margin-bottom: 0;
+    }
+
+    .option-content pre {
+      margin: 8px 0;
+      background: #0f172a;
+      color: #e2e8f0;
+      padding: 10px;
+      border-radius: 8px;
+      overflow: auto;
+      border: 1px solid #334155;
+    }
+
+    .option-content code {
+      font-family: "Cascadia Code", Consolas, monospace;
+      font-size: 0.9rem;
+    }
+
     .row {
       display: flex;
       flex-wrap: wrap;
@@ -336,6 +378,66 @@
       padding-top: 12px;
     }
 
+    .results-wrap {
+      display: none;
+      padding: 22px;
+      gap: 14px;
+    }
+
+    .results-wrap.visible {
+      display: grid;
+      animation: fadeIn var(--duration) ease;
+    }
+
+    .results-head h2 {
+      margin: 0;
+    }
+
+    .results-summary {
+      border: 1px solid #bfdbfe;
+      border-radius: 12px;
+      background: #eff6ff;
+      padding: 12px;
+      color: #0c4a6e;
+      line-height: 1.5;
+    }
+
+    .results-list {
+      display: grid;
+      gap: 10px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .results-item {
+      border: 1px solid #fecaca;
+      border-radius: 12px;
+      background: #fff1f2;
+      padding: 12px;
+      color: #7f1d1d;
+    }
+
+    .results-item h3 {
+      margin: 0 0 6px;
+      font-size: 1rem;
+      color: #991b1b;
+    }
+
+    .results-meta {
+      margin: 0;
+      line-height: 1.5;
+    }
+
+    .results-perfect {
+      border: 1px solid #bbf7d0;
+      border-radius: 12px;
+      background: #f0fdf4;
+      color: #14532d;
+      padding: 12px;
+      font-weight: 600;
+    }
+
     @keyframes fadeIn {
       from {
         opacity: 0;
@@ -406,6 +508,17 @@
         <button class="btn btn-secondary" id="nextBtn" type="button">Next</button>
       </div>
     </section>
+
+    <section class="card results-wrap" id="resultsWrap" aria-live="polite">
+      <div class="results-head">
+        <h2>Quiz Results</h2>
+      </div>
+      <div class="results-summary" id="resultsSummary"></div>
+      <ul class="results-list" id="resultsList"></ul>
+      <div class="row">
+        <button class="btn btn-secondary" id="reviewQuizBtn" type="button">Review Questions</button>
+      </div>
+    </section>
   </main>
 
   <script>
@@ -427,6 +540,10 @@
     const progressFill = document.getElementById("progressFill");
     const prevBtn = document.getElementById("prevBtn");
     const nextBtn = document.getElementById("nextBtn");
+    const resultsWrap = document.getElementById("resultsWrap");
+    const resultsSummary = document.getElementById("resultsSummary");
+    const resultsList = document.getElementById("resultsList");
+    const reviewQuizBtn = document.getElementById("reviewQuizBtn");
 
     function setStatus(message, isError = false) {
       statusEl.textContent = message;
@@ -535,11 +652,70 @@
         state.submitted = {};
 
         setStatus(`Loaded ${data.question_count} questions from ${data.source_file}.`);
+        resultsWrap.classList.remove("visible");
         quizWrap.classList.add("visible");
         renderCurrentQuestion();
       } catch (error) {
         setStatus(error.message || "Upload failed.", true);
       }
+    }
+
+    function allQuestionsSubmitted() {
+      return state.questions.every((question) => state.submitted[String(question.number)]);
+    }
+
+    function getOptionTextByLetter(question, letter) {
+      const found = question.options.find((option) => option.letter === letter);
+      if (!found) return "(option text not found)";
+      return found.text.replace(/\s+/g, " ").trim();
+    }
+
+    function renderResults() {
+      const total = state.questions.length;
+      const wrong = [];
+
+      for (const question of state.questions) {
+        const key = String(question.number);
+        const selected = state.selections[key] || "(no selection)";
+        if (selected !== question.correct_answer) {
+          wrong.push({
+            number: question.number,
+            title: question.title,
+            selected,
+            correct: question.correct_answer,
+            correctText: getOptionTextByLetter(question, question.correct_answer)
+          });
+        }
+      }
+
+      const score = total - wrong.length;
+      const percent = total ? Math.round((score / total) * 100) : 0;
+
+      resultsSummary.innerHTML = `
+        <strong>Score:</strong> ${score}/${total} (${percent}%)
+      `;
+
+      if (wrong.length === 0) {
+        resultsList.innerHTML = `
+          <li class="results-perfect">Perfect score. You did not miss any questions.</li>
+        `;
+      } else {
+        resultsList.innerHTML = wrong
+          .map(
+            (item) => `
+              <li class="results-item">
+                <h3>Question ${item.number}: ${inlineMarkdown(item.title)}</h3>
+                <p class="results-meta"><strong>Your answer:</strong> ${inlineMarkdown(item.selected)}</p>
+                <p class="results-meta"><strong>Correct answer:</strong> ${inlineMarkdown(item.correct)}) ${inlineMarkdown(item.correctText)}</p>
+              </li>
+            `
+          )
+          .join("");
+      }
+
+      quizWrap.classList.remove("visible");
+      resultsWrap.classList.add("visible");
+      setStatus(`Quiz complete. Final score: ${score}/${total}.`);
     }
 
     function renderCurrentQuestion() {
@@ -563,7 +739,10 @@
           return `
             <label class="option ${selectedClass}" data-letter="${opt.letter}">
               <input type="radio" name="option" value="${opt.letter}" ${checked} aria-label="Option ${opt.letter}" />
-              <div><strong>${opt.letter})</strong> ${inlineMarkdown(opt.text)}</div>
+              <div class="option-content">
+                <p><strong>${opt.letter})</strong></p>
+                ${renderMarkdown(opt.text)}
+              </div>
             </label>
           `;
         })
@@ -650,6 +829,10 @@
 
         rationalePanel.classList.add("visible");
         setStatus(correct ? "Answer submitted: correct." : "Answer submitted: incorrect.");
+
+        if (state.currentIndex === state.questions.length - 1 && allQuestionsSubmitted()) {
+          renderResults();
+        }
       });
     }
 
@@ -664,7 +847,19 @@
       if (state.currentIndex < state.questions.length - 1) {
         state.currentIndex += 1;
         renderCurrentQuestion();
+      } else if (allQuestionsSubmitted()) {
+        renderResults();
+      } else {
+        setStatus("Submit answers for all questions before viewing final results.", true);
       }
+    });
+
+    reviewQuizBtn.addEventListener("click", () => {
+      resultsWrap.classList.remove("visible");
+      quizWrap.classList.add("visible");
+      state.currentIndex = 0;
+      renderCurrentQuestion();
+      setStatus("Review mode: navigate your quiz answers.");
     });
 
     fileInput.addEventListener("change", (event) => {

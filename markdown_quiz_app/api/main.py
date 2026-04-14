@@ -48,7 +48,7 @@ app.add_middleware(
 
 
 QUESTION_HEADER_RE = re.compile(r"^###\s+Question\s+(\d+)\s*:\s*(.+)$", re.MULTILINE)
-OPTION_RE = re.compile(r"^\s*-\s*([A-D])\)\s+(.+?)\s*$", re.MULTILINE)
+OPTION_START_RE = re.compile(r"^\s*-\s*([A-D])\)\s*(.*)$", re.MULTILINE)
 HINT_RE = re.compile(
     r"<details>\s*<summary>\s*<b>Hint</b>\s*</summary>(.*?)</details>",
     re.DOTALL,
@@ -99,8 +99,8 @@ def parse_quiz_markdown(markdown_text: str) -> List[QuizQuestion]:
 
         # Only parse options before the hint block so rationale bullets are not treated as choices.
         option_section = block[: hint_match.start()]
-        option_matches = list(OPTION_RE.finditer(option_section))
-        option_count = len(option_matches)
+        option_starts = list(OPTION_START_RE.finditer(option_section))
+        option_count = len(option_starts)
         if option_count not in (2, 4):
             raise HTTPException(
                 status_code=400,
@@ -110,7 +110,7 @@ def parse_quiz_markdown(markdown_text: str) -> List[QuizQuestion]:
                 ),
             )
 
-        option_letters = [m.group(1).upper() for m in option_matches]
+        option_letters = [m.group(1).upper() for m in option_starts]
         expected_letters = ["A", "B"] if option_count == 2 else ["A", "B", "C", "D"]
         if option_letters != expected_letters:
             raise HTTPException(
@@ -121,13 +121,21 @@ def parse_quiz_markdown(markdown_text: str) -> List[QuizQuestion]:
                 ),
             )
 
-        options = [
-            QuizOption(letter=m.group(1).upper(), text=m.group(2).strip())
-            for m in option_matches
-        ]
+        options: List[QuizOption] = []
+        for idx, start_match in enumerate(option_starts):
+            next_start = option_starts[idx + 1].start() if idx + 1 < option_count else len(option_section)
+            inline_text = start_match.group(2).strip()
+            continuation = option_section[start_match.end() : next_start].strip("\n")
+            option_text = inline_text
+            if continuation.strip():
+                option_text = f"{option_text}\n{continuation}" if option_text else continuation
+
+            options.append(
+                QuizOption(letter=start_match.group(1).upper(), text=option_text.strip())
+            )
 
         body_start = header_match.end()
-        body_end = option_matches[0].start()
+        body_end = option_starts[0].start()
         body_markdown = block[body_start:body_end].strip()
         hint_markdown = hint_match.group(1).strip()
 
@@ -206,7 +214,7 @@ def parse_quiz_markdown(markdown_text: str) -> List[QuizQuestion]:
 
 @app.get("/")
 def serve_index() -> FileResponse:
-    index_path = Path(__file__).parent / "index.html"
+    index_path = Path(__file__).parent.parent / "index.html"
     if not index_path.exists():
         raise HTTPException(status_code=404, detail="index.html not found.")
     return FileResponse(index_path)
