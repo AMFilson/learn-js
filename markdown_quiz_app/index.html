@@ -1,918 +1,252 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Markdown Quiz Player</title>
-  <style>
-    :root {
-      --bg-0: #f9fafb;
-      --bg-1: #eef2ff;
-      --bg-2: #e0f2fe;
-      --surface: #ffffff;
-      --surface-soft: #f8fafc;
-      --text: #0f172a;
-      --muted: #475569;
-      --line: #cbd5e1;
-      --primary: #0369a1;
-      --primary-strong: #075985;
-      --success: #166534;
-      --danger: #b91c1c;
-      --danger-strong: #991b1b;
-      --warning: #92400e;
-      --radius-lg: 20px;
-      --radius-md: 14px;
-      --shadow-lg: 0 18px 45px rgba(15, 23, 42, 0.12);
-      --shadow-md: 0 8px 24px rgba(15, 23, 42, 0.09);
-      --duration: 220ms;
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      margin: 0;
-      font-family: "Segoe UI", "Trebuchet MS", "Gill Sans", sans-serif;
-      color: var(--text);
-      background:
-        radial-gradient(circle at 15% 15%, rgba(14, 165, 233, 0.18), transparent 40%),
-        radial-gradient(circle at 85% 15%, rgba(56, 189, 248, 0.2), transparent 34%),
-        linear-gradient(145deg, var(--bg-0), var(--bg-1) 45%, var(--bg-2));
-      min-height: 100vh;
-      padding: 24px;
-    }
-
-    .app-shell {
-      max-width: 980px;
-      margin: 0 auto;
-      display: grid;
-      gap: 18px;
-    }
-
-    .card {
-      background: var(--surface);
-      border: 1px solid rgba(148, 163, 184, 0.35);
-      border-radius: var(--radius-lg);
-      box-shadow: var(--shadow-md);
-      overflow: hidden;
-    }
-
-    .hero {
-      padding: 24px;
-      display: grid;
-      gap: 10px;
-    }
-
-    .hero h1 {
-      margin: 0;
-      letter-spacing: 0.4px;
-      font-size: clamp(1.6rem, 3vw, 2.35rem);
-      color: #0b3954;
-    }
-
-    .hero p {
-      margin: 0;
-      color: var(--muted);
-      line-height: 1.55;
-    }
-
-    .upload-zone {
-      margin: 0 24px 24px;
-      border: 2px dashed #7dd3fc;
-      border-radius: var(--radius-md);
-      background: linear-gradient(180deg, #f0f9ff, #ffffff);
-      padding: 26px;
-      min-height: 128px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      text-align: center;
-      transition: border-color var(--duration), transform var(--duration), box-shadow var(--duration);
-      cursor: pointer;
-    }
-
-    .upload-zone:hover,
-    .upload-zone.dragover {
-      border-color: var(--primary);
-      transform: translateY(-1px);
-      box-shadow: var(--shadow-lg);
-    }
-
-    .upload-zone strong {
-      display: block;
-      font-size: 1.1rem;
-      color: #0c4a6e;
-      margin: 0;
-      max-width: 100%;
-      overflow-wrap: anywhere;
-    }
-
-    .upload-zone span {
-      color: var(--muted);
-      font-size: 0.95rem;
-      max-width: 100%;
-      overflow-wrap: anywhere;
-    }
-
-    .upload-zone input[type="file"] {
-      display: none !important;
-    }
-
-    .status {
-      margin: 0 24px 24px;
-      background: var(--surface-soft);
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      padding: 10px 12px;
-      color: #1e293b;
-      min-height: 44px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 0.96rem;
-    }
-
-    .quiz-wrap {
-      display: none;
-      padding: 22px;
-      gap: 18px;
-    }
-
-    .quiz-wrap.visible {
-      display: grid;
-      animation: fadeIn var(--duration) ease;
-    }
-
-    .quiz-top {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-    }
-
-    .quiz-top .meta {
-      color: var(--muted);
-      font-size: 0.95rem;
-      white-space: nowrap;
-    }
-
-    .quiz-actions-meta {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
-
-    .progress-track {
-      width: 100%;
-      height: 10px;
-      border-radius: 999px;
-      background: #dbeafe;
-      overflow: hidden;
-      border: 1px solid #bfdbfe;
-    }
-
-    .progress-fill {
-      height: 100%;
-      width: 0%;
-      background: linear-gradient(90deg, #0ea5e9, #2563eb);
-      transition: width var(--duration) ease;
-    }
-
-    h2 {
-      margin: 4px 0 8px;
-      font-size: clamp(1.1rem, 2vw, 1.55rem);
-      color: #082f49;
-    }
-
-    .question-body {
-      line-height: 1.6;
-      color: #0f172a;
-    }
-
-    .question-body p {
-      margin: 0 0 12px;
-    }
-
-    .question-body pre {
-      background: #0f172a;
-      color: #e2e8f0;
-      padding: 12px;
-      border-radius: 10px;
-      overflow: auto;
-      margin: 12px 0;
-      border: 1px solid #334155;
-    }
-
-    .question-body code {
-      font-family: "Cascadia Code", Consolas, monospace;
-      font-size: 0.93rem;
-    }
-
-    .options {
-      display: grid;
-      gap: 10px;
-      margin-top: 10px;
-    }
-
-    .option {
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      padding: 12px 14px;
-      background: #ffffff;
-      cursor: pointer;
-      transition: transform var(--duration), border-color var(--duration), background-color var(--duration);
-      display: flex;
-      align-items: flex-start;
-      gap: 10px;
-    }
-
-    .option:hover {
-      transform: translateY(-1px);
-      border-color: #7dd3fc;
-      background: #f8fdff;
-    }
-
-    .option.selected {
-      border-color: #0284c7;
-      background: #ecfeff;
-      box-shadow: inset 0 0 0 1px rgba(2, 132, 199, 0.2);
-    }
-
-    .option input {
-      margin-top: 2px;
-      accent-color: var(--primary);
-    }
-
-    .option-content {
-      width: 100%;
-    }
-
-    .option-content p {
-      margin: 0 0 8px;
-      line-height: 1.5;
-    }
-
-    .option-content p:last-child {
-      margin-bottom: 0;
-    }
-
-    .option-content pre {
-      margin: 8px 0;
-      background: #0f172a;
-      color: #e2e8f0;
-      padding: 10px;
-      border-radius: 8px;
-      overflow: auto;
-      border: 1px solid #334155;
-    }
-
-    .option-content code {
-      font-family: "Cascadia Code", Consolas, monospace;
-      font-size: 0.9rem;
-    }
-
-    .row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-
-    .btn {
-      appearance: none;
-      border: 1px solid transparent;
-      border-radius: 10px;
-      padding: 10px 14px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: transform var(--duration), background-color var(--duration), color var(--duration), border-color var(--duration);
-    }
-
-    .btn:focus-visible {
-      outline: 3px solid rgba(14, 165, 233, 0.45);
-      outline-offset: 1px;
-    }
-
-    .btn:hover {
-      transform: translateY(-1px);
-    }
-
-    .btn-primary:hover {
-      background: var(--primary-strong);
-    }
-
-    .btn-danger {
-      background: var(--danger);
-      color: #ffffff;
-    }
-
-    .btn-danger:hover {
-      background: var(--danger-strong);
-    }
-
-    .btn-sm {
-      padding: 6px 12px;
-      font-size: 0.85rem;
-      border-radius: 8px;
-    }
-
-    .btn-secondary {
-      background: #f8fafc;
-      color: #0f172a;
-      border-color: #cbd5e1;
-    }
-
-    .btn-secondary:hover {
-      background: #f1f5f9;
-    }
-
-    .btn-ghost {
-      background: transparent;
-      border-color: #bae6fd;
-      color: #0c4a6e;
-    }
-
-    .hint-panel,
-    .feedback-panel,
-    .rationale-panel {
-      border-radius: 12px;
-      padding: 0 12px;
-      max-height: 0;
-      overflow: hidden;
-      opacity: 0;
-      transform: translateY(-2px);
-      transition: max-height 300ms ease, opacity 250ms ease, transform 250ms ease, padding 250ms ease;
-      border: 1px solid transparent;
-      background: #ffffff;
-    }
-
-    .hint-panel.visible,
-    .feedback-panel.visible,
-    .rationale-panel.visible {
-      max-height: 480px;
-      opacity: 1;
-      transform: translateY(0);
-      padding: 12px;
-    }
-
-    .hint-panel.visible {
-      background: #fff7ed;
-      border-color: #fed7aa;
-    }
-
-    .feedback-panel.visible.correct {
-      background: #f0fdf4;
-      border-color: #bbf7d0;
-      color: var(--success);
-    }
-
-    .feedback-panel.visible.wrong {
-      background: #fef2f2;
-      border-color: #fecaca;
-      color: var(--danger);
-    }
-
-    .rationale-panel.visible {
-      background: #f8fafc;
-      border-color: #cbd5e1;
-    }
-
-    .rationale-panel ul {
-      margin: 0;
-      padding-left: 18px;
-      display: grid;
-      gap: 8px;
-    }
-
-    .pager {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 8px;
-      border-top: 1px solid #e2e8f0;
-      padding-top: 12px;
-    }
-
-    .results-wrap {
-      display: none;
-      padding: 22px;
-      gap: 14px;
-    }
-
-    .results-wrap.visible {
-      display: grid;
-      animation: fadeIn var(--duration) ease;
-    }
-
-    .results-head h2 {
-      margin: 0;
-    }
-
-    .results-summary {
-      border: 1px solid #bfdbfe;
-      border-radius: 12px;
-      background: #eff6ff;
-      padding: 12px;
-      color: #0c4a6e;
-      line-height: 1.5;
-    }
-
-    .results-list {
-      display: grid;
-      gap: 10px;
-      margin: 0;
-      padding: 0;
-      list-style: none;
-    }
-
-    .results-item {
-      border: 1px solid #fecaca;
-      border-radius: 12px;
-      background: #fff1f2;
-      padding: 12px;
-      color: #7f1d1d;
-    }
-
-    .results-item h3 {
-      margin: 0 0 6px;
-      font-size: 1rem;
-      color: #991b1b;
-    }
-
-    .results-meta {
-      margin: 0;
-      line-height: 1.5;
-    }
-
-    .results-perfect {
-      border: 1px solid #bbf7d0;
-      border-radius: 12px;
-      background: #f0fdf4;
-      color: #14532d;
-      padding: 12px;
-      font-weight: 600;
-    }
-
-    @keyframes fadeIn {
-      from {
-        opacity: 0;
-        transform: translateY(6px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    @media (max-width: 700px) {
-      body {
-        padding: 12px;
-      }
-
-      .hero,
-      .quiz-wrap {
-        padding: 16px;
-      }
-
-      .upload-zone,
-      .status {
-        margin-left: 16px;
-        margin-right: 16px;
-      }
-
-      .btn {
-        width: 100%;
-      }
-
-      .row {
-        display: grid;
-      }
-    }
-  </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TESTFLOW_ // AI Enhanced Learning Platform</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/index.css">
 </head>
 <body>
-  <main class="app-shell">
-    <section class="card">
-      <header class="hero">
-        <h1>Markdown Quiz Player</h1>
-        <p>Upload a quiz markdown file, answer interactively, reveal hints on demand, and get instant correctness + rationale feedback.</p>
-      </header>
 
-      <label class="upload-zone" id="uploadZone" for="fileInput" aria-label="Upload markdown quiz file">
-        <strong>Drop your .md quiz file here</strong>
-        <span>or click to choose a file from your computer</span>
-        <input id="fileInput" type="file" accept=".md,text/markdown" hidden />
-      </label>
+  <!-- HEADER -->
+  <header>
+    <div class="header-left">
+      <div class="sub-brand">4-0 // ASSESSMENT PLATFORM</div>
+      <div class="brand">TESTFLOW_</div>
+    </div>
+    <div class="header-right">
+      <div class="user-id">CREATED_BY: ANDREW_FILSON</div>
+      <div class="session">ACTIVE_SESSION: <span id="sessionState">IDLE</span></div>
+    </div>
+  </header>
 
-      <div class="status" id="status" role="status" aria-live="polite">Waiting for file upload.</div>
-    </section>
+  <!-- CONTROL BAR -->
+  <section class="control-bar">
+    <div class="url-input-group">
+      <div class="url-label">SOURCE_URL</div>
+      <input type="text" id="urlInput" class="url-input" placeholder="Paste documentation or article link here..." value="https://react.dev/learn/synchronizing-with-effects">
+    </div>
+    <button class="btn btn-orange" id="btnGenerateGuide">GENERATE STUDY GUIDE</button>
+    <button class="btn btn-purple" id="btnBuildQuiz" disabled>BUILD QUIZ</button>
+  </section>
 
-    <section class="card quiz-wrap" id="quizWrap" aria-live="polite">
-      <div class="quiz-top">
-        <div class="meta" id="quizMeta">No quiz loaded</div>
-        <div class="quiz-actions-meta">
-          <div class="meta" id="questionMeta"></div>
-          <button class="btn btn-danger btn-sm" id="endQuizBtn" type="button">End Quiz</button>
+  <!-- WORKSPACE -->
+  <section class="workspace">
+    
+    <!-- LEFT: STUDY GUIDE -->
+    <div class="col-left">
+      <div class="section-header">
+        <h2>GENERATED STUDY GUIDE</h2>
+        <div class="section-meta" id="guideIdText">ID: PENDING</div>
+      </div>
+      
+      <div id="guideContent">
+        <!-- Initial empty state -->
+        <div style="font-family: var(--font-mono); color: #888; margin-top: 40px; text-align: center;">
+          [ WAITING FOR SOURCE URL ]
         </div>
       </div>
-      <div class="progress-track" aria-hidden="true">
-        <div class="progress-fill" id="progressFill"></div>
+    </div>
+
+    <!-- RIGHT: ACTIVE QUIZ -->
+    <div class="col-right">
+      <div class="section-header">
+        <h2>ACTIVE QUIZ</h2>
+        <div class="section-meta mono" id="quizCounter">00 / 00</div>
+      </div>
+      
+      <div id="quizContent">
+        <!-- Initial empty state -->
+        <div style="font-family: var(--font-mono); color: #888; margin-top: 40px; text-align: center;">
+          [ QUIZ NOT GENERATED ]
+        </div>
       </div>
 
-      <article id="questionCard"></article>
+    </div>
 
-      <div class="pager">
-        <button class="btn btn-secondary" id="prevBtn" type="button">Previous</button>
-        <button class="btn btn-secondary" id="nextBtn" type="button">Next</button>
-      </div>
-    </section>
-
-    <section class="card results-wrap" id="resultsWrap" aria-live="polite">
-      <div class="results-head">
-        <h2>Quiz Results</h2>
-      </div>
-      <div class="results-summary" id="resultsSummary"></div>
-      <ul class="results-list" id="resultsList"></ul>
-      <div class="row">
-        <button class="btn btn-secondary" id="reviewQuizBtn" type="button">Review Questions</button>
-      </div>
-    </section>
-  </main>
+  </section>
 
   <script>
-    const state = {
-      sourceFile: "",
-      questions: [],
-      currentIndex: 0,
-      selections: {},
-      submitted: {}
+    // --- UI ELEMENTS ---
+    const urlInput = document.getElementById('urlInput');
+    const btnGenerateGuide = document.getElementById('btnGenerateGuide');
+    const btnBuildQuiz = document.getElementById('btnBuildQuiz');
+    
+    const guideContent = document.getElementById('guideContent');
+    const guideIdText = document.getElementById('guideIdText');
+    const sessionState = document.getElementById('sessionState');
+    
+    const quizContent = document.getElementById('quizContent');
+    const quizCounter = document.getElementById('quizCounter');
+
+    // --- MOCK DATA ---
+    const mockGuideCards = [
+      {
+        num: 1, title: "THE PURPOSE OF EFFECTS", 
+        body: "Effects let you specify side effects that are caused by rendering itself, rather than by a particular event. Synchronizing a component with an external system (like a non-React widget, network connection, or browser DOM) is the primary use case."
+      },
+      {
+        num: 2, title: "DEPENDENCY ARRAYS", 
+        body: "React will skip re-running the Effect if every dependency you specify has the same value as it had during the previous render. An empty array [] means the Effect only runs after the initial mount."
+      }
+    ];
+
+    const mockQuestion = {
+      text: "WHEN DOES A CLEANUP FUNCTION EXECUTE IN USEEFFECT?",
+      options: [
+        { letter: "A", text: "Before the next effect runs" },
+        { letter: "B", text: "After the component unmounts" },
+        { letter: "C", text: "Only on browser refresh" }
+      ],
+      correct: "A"
     };
 
-    const fileInput = document.getElementById("fileInput");
-    const uploadZone = document.getElementById("uploadZone");
-    const statusEl = document.getElementById("status");
-    const quizWrap = document.getElementById("quizWrap");
-    const questionCard = document.getElementById("questionCard");
-    const quizMeta = document.getElementById("quizMeta");
-    const questionMeta = document.getElementById("questionMeta");
-    const progressFill = document.getElementById("progressFill");
-    const prevBtn = document.getElementById("prevBtn");
-    const nextBtn = document.getElementById("nextBtn");
-    const endQuizBtn = document.getElementById("endQuizBtn");
-    const resultsWrap = document.getElementById("resultsWrap");
-    const resultsSummary = document.getElementById("resultsSummary");
-    const resultsList = document.getElementById("resultsList");
-    const reviewQuizBtn = document.getElementById("reviewQuizBtn");
+    // --- WORKFLOW LOGIC ---
 
-    function setStatus(message, isError = false) {
-      statusEl.textContent = message;
-      statusEl.style.borderColor = isError ? "#fecaca" : "#cbd5e1";
-      statusEl.style.background = isError ? "#fef2f2" : "#f8fafc";
-      statusEl.style.color = isError ? "#991b1b" : "#0f172a";
-    }
-
-    function escapeHtml(raw) {
-      return raw
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/\"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-    }
-
-    function inlineMarkdown(text) {
-      let html = escapeHtml(text);
-      html = html.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
-      html = html.replace(/`([^`]+)`/g, "<code>$1</code>");
-      return html;
-    }
-
-    function renderMarkdown(md) {
-      if (!md || !md.trim()) return "";
-
-      const blocks = [];
-      const regex = /```([a-zA-Z0-9_-]+)?\n([\s\S]*?)```/g;
-      let last = 0;
-      let match;
-
-      while ((match = regex.exec(md)) !== null) {
-        const before = md.slice(last, match.index);
-        if (before.trim()) blocks.push({ type: "text", value: before });
-        blocks.push({ type: "code", lang: (match[1] || "").trim(), value: match[2] });
-        last = regex.lastIndex;
-      }
-      const tail = md.slice(last);
-      if (tail.trim()) blocks.push({ type: "text", value: tail });
-
-      const html = blocks.map((block) => {
-        if (block.type === "code") {
-          const langAttr = block.lang ? ` data-lang="${escapeHtml(block.lang)}"` : "";
-          return `<pre><code${langAttr}>${escapeHtml(block.value.trimEnd())}</code></pre>`;
-        }
-
-        const lines = block.value
-          .split("\n")
-          .map((l) => l.trimEnd())
-          .filter((l) => l.trim() !== "");
-
-        const rendered = [];
-        let inList = false;
-
-        for (const line of lines) {
-          const listMatch = line.match(/^[-*]\s+(.+)$/);
-          if (listMatch) {
-            if (!inList) {
-              rendered.push("<ul>");
-              inList = true;
-            }
-            rendered.push(`<li>${inlineMarkdown(listMatch[1])}</li>`);
-          } else {
-            if (inList) {
-              rendered.push("</ul>");
-              inList = false;
-            }
-            rendered.push(`<p>${inlineMarkdown(line)}</p>`);
-          }
-        }
-
-        if (inList) rendered.push("</ul>");
-        return rendered.join("");
-      });
-
-      return html.join("");
-    }
-
-    async function uploadMarkdown(file) {
-      if (!file || !file.name.toLowerCase().endsWith(".md")) {
-        setStatus("Please upload a valid .md file.", true);
-        return;
-      }
-
-      const formData = new FormData();
-      formData.append("file", file);
-
-      setStatus(`Uploading ${file.name}...`);
-
-      try {
-        const response = await fetch("/api/upload-quiz", {
-          method: "POST",
-          body: formData
-        });
-
-        const data = await response.json();
-        if (!response.ok) {
-          throw new Error(data.detail || "Failed to parse quiz markdown.");
-        }
-
-        state.sourceFile = data.source_file;
-        state.questions = data.questions;
-        state.currentIndex = 0;
-        state.selections = {};
-        state.submitted = {};
-
-        setStatus(`Loaded ${data.question_count} questions from ${data.source_file}.`);
-        resultsWrap.classList.remove("visible");
-        quizWrap.classList.add("visible");
-        renderCurrentQuestion();
-      } catch (error) {
-        setStatus(error.message || "Upload failed.", true);
-      }
-    }
-
-    function allQuestionsSubmitted() {
-      return state.questions.every((question) => state.submitted[String(question.number)]);
-    }
-
-    function getOptionTextByLetter(question, letter) {
-      const found = question.options.find((option) => option.letter === letter);
-      if (!found) return "(option text not found)";
-      return found.text.replace(/\s+/g, " ").trim();
-    }
-
-    function renderResults() {
-      const total = state.questions.length;
-      const wrong = [];
-
-      for (const question of state.questions) {
-        const key = String(question.number);
-        const selected = state.selections[key] || "(no selection)";
-        if (selected !== question.correct_answer) {
-          wrong.push({
-            number: question.number,
-            title: question.title,
-            selected,
-            correct: question.correct_answer,
-            correctText: getOptionTextByLetter(question, question.correct_answer)
-          });
-        }
-      }
-
-      const score = total - wrong.length;
-      const percent = total ? Math.round((score / total) * 100) : 0;
-
-      resultsSummary.innerHTML = `
-        <strong>Score:</strong> ${score}/${total} (${percent}%)
-      `;
-
-      if (wrong.length === 0) {
-        resultsList.innerHTML = `
-          <li class="results-perfect">Perfect score. You did not miss any questions.</li>
-        `;
-      } else {
-        resultsList.innerHTML = wrong
-          .map(
-            (item) => `
-              <li class="results-item">
-                <h3>Question ${item.number}: ${inlineMarkdown(item.title)}</h3>
-                <p class="results-meta"><strong>Your answer:</strong> ${inlineMarkdown(item.selected)}</p>
-                <p class="results-meta"><strong>Correct answer:</strong> ${inlineMarkdown(item.correct)}) ${inlineMarkdown(item.correctText)}</p>
-              </li>
-            `
-          )
-          .join("");
-      }
-
-      quizWrap.classList.remove("visible");
-      resultsWrap.classList.add("visible");
-      setStatus(`Quiz complete. Final score: ${score}/${total}.`);
-    }
-
-    function renderCurrentQuestion() {
-      const total = state.questions.length;
-      if (!total) return;
-
-      const q = state.questions[state.currentIndex];
-      const key = String(q.number);
-      const selected = state.selections[key] || "";
-      const hasSubmitted = Boolean(state.submitted[key]);
-      const isCorrect = hasSubmitted && selected === q.correct_answer;
-
-      quizMeta.textContent = `${state.sourceFile} | ${total} question${total === 1 ? "" : "s"}`;
-      questionMeta.textContent = `Question ${state.currentIndex + 1} of ${total}`;
-      progressFill.style.width = `${((state.currentIndex + 1) / total) * 100}%`;
-
-      const optionsHtml = q.options
-        .map((opt) => {
-          const checked = selected === opt.letter ? "checked" : "";
-          const selectedClass = selected === opt.letter ? "selected" : "";
-          return `
-            <label class="option ${selectedClass}" data-letter="${opt.letter}">
-              <input type="radio" name="option" value="${opt.letter}" ${checked} aria-label="Option ${opt.letter}" />
-              <div class="option-content">
-                <p><strong>${opt.letter})</strong></p>
-                ${renderMarkdown(opt.text)}
-              </div>
-            </label>
-          `;
-        })
-        .join("");
-
-      const rationaleItems = q.rationale
-        .map((item) => {
-          if (item.letter) {
-            return `<li><strong>${item.letter})</strong> ${inlineMarkdown(item.text)}</li>`;
-          }
-          return `<li>${inlineMarkdown(item.text)}</li>`;
-        })
-        .join("");
-
-      questionCard.innerHTML = `
-        <h2>${q.title}</h2>
-        <div class="question-body">${renderMarkdown(q.body_markdown)}</div>
-        <section class="options" id="optionsWrap">${optionsHtml}</section>
-
-        <div class="row" style="margin-top: 10px;">
-          <button class="btn btn-ghost" type="button" id="hintBtn">Show Hint</button>
-          <button class="btn btn-primary" type="button" id="submitBtn">Submit Answer</button>
+    // 1. Generate Guide Flow
+    btnGenerateGuide.addEventListener('click', () => {
+      if (!urlInput.value) return alert("Please enter a URL first.");
+      
+      sessionState.textContent = "EXTRACTING_DATA";
+      btnGenerateGuide.disabled = true;
+      urlInput.disabled = true;
+      
+      guideContent.innerHTML = '';
+      
+      // Phase 1: Processing
+      const processCard = document.createElement('div');
+      processCard.className = 'card processing';
+      processCard.innerHTML = `
+        <div class="card-header">
+          <div class="circle-num">1</div>
+          <div class="card-title">ANALYZING SOURCE...</div>
         </div>
+        <div class="card-body">AI is parsing the document structure and identifying key pedagogical concepts...</div>
+      `;
+      guideContent.appendChild(processCard);
 
-        <section class="hint-panel" id="hintPanel">${renderMarkdown(q.hint_markdown)}</section>
+      // Fake Loading Delay
+      setTimeout(() => {
+        renderMockGuide();
+      }, 1500);
+    });
 
-        <section class="feedback-panel ${hasSubmitted ? `visible ${isCorrect ? "correct" : "wrong"}` : ""}" id="feedbackPanel">
-          ${hasSubmitted ? (isCorrect ? "Correct. Great work." : `Not quite. Correct answer is ${q.correct_answer}.`) : ""}
-        </section>
+    function renderMockGuide() {
+      sessionState.textContent = "GUIDE_READY";
+      guideIdText.textContent = "ID: SG_88291_A";
+      guideContent.innerHTML = ''; // clear
 
-        <section class="rationale-panel ${hasSubmitted ? "visible" : ""}" id="rationalePanel">
-          <h3 style="margin: 0 0 8px; font-size: 1rem; color: #0f172a;">Detailed Rationale</h3>
-          <ul>${rationaleItems}</ul>
-        </section>
+      mockGuideCards.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'card';
+        div.innerHTML = `
+          <div class="card-header">
+            <div class="circle-num">${item.num}</div>
+            <div class="card-title">${item.title}</div>
+          </div>
+          <div class="card-body">${item.body}</div>
+        `;
+        guideContent.appendChild(div);
+      });
+
+      // Add a processing card at the end for authenticity
+      const processCard = document.createElement('div');
+      processCard.className = 'card processing';
+      processCard.innerHTML = `
+        <div class="card-header">
+          <div class="circle-num">3</div>
+          <div class="card-title">CLEANUP LOGIC</div>
+        </div>
+        <div class="card-body">AI is processing the cleanup function requirements and race condition handling for this section...</div>
+      `;
+      guideContent.appendChild(processCard);
+
+      // Enable quiz generation
+      btnBuildQuiz.disabled = false;
+      btnGenerateGuide.disabled = false;
+      btnGenerateGuide.textContent = "REGENERATE";
+    }
+
+    // 2. Build Quiz Flow
+    btnBuildQuiz.addEventListener('click', () => {
+      sessionState.textContent = "BUILDING_QUIZ";
+      btnBuildQuiz.disabled = true;
+      
+      quizContent.innerHTML = `
+        <div style="font-family: var(--font-mono); color: #888; margin-top: 40px; text-align: center;">
+          [ SYNCING GUIDE DATA TO LLM GENERATOR... ]
+        </div>
       `;
 
-      wireQuestionEvents(q);
+      setTimeout(() => {
+        renderMockQuiz();
+      }, 1200);
+    });
 
-      prevBtn.disabled = state.currentIndex === 0;
-      nextBtn.disabled = state.currentIndex === total - 1;
-    }
+    function renderMockQuiz() {
+      sessionState.textContent = "RECALL_ALPHA";
+      quizCounter.textContent = "02 / 10"; // Hardcoded to match mockup
+      btnBuildQuiz.disabled = false;
+      btnBuildQuiz.innerText = "REBUILD QUIZ";
 
-    function wireQuestionEvents(question) {
-      const key = String(question.number);
-      const optionsWrap = document.getElementById("optionsWrap");
-      const hintBtn = document.getElementById("hintBtn");
-      const hintPanel = document.getElementById("hintPanel");
-      const submitBtn = document.getElementById("submitBtn");
-      const feedbackPanel = document.getElementById("feedbackPanel");
-      const rationalePanel = document.getElementById("rationalePanel");
+      let optionsHtml = '';
+      mockQuestion.options.forEach((opt, idx) => {
+        // Pre-select B just like the mockup image
+        const isActive = opt.letter === 'B'; 
+        const cls = isActive ? 'quiz-option active' : 'quiz-option';
+        const tagText = isActive ? 'ACTIVE' : 'SELECT';
+        const tagCls = isActive ? 'quiz-tag' : 'quiz-tag muted';
 
-      optionsWrap.addEventListener("change", (event) => {
-        const input = event.target;
-        if (!(input instanceof HTMLInputElement)) return;
-        state.selections[key] = input.value;
+        optionsHtml += `
+          <div class="${cls}" data-letter="${opt.letter}">
+            <div class="quiz-option-text">${opt.letter}) ${opt.text}</div>
+            <div class="${tagCls}">${tagText}</div>
+          </div>
+        `;
+      });
 
-        optionsWrap.querySelectorAll(".option").forEach((optionEl) => {
-          optionEl.classList.toggle(
-            "selected",
-            optionEl.getAttribute("data-letter") === input.value
-          );
+      quizContent.innerHTML = `
+        <div class="quiz-question-box">
+          ${mockQuestion.text}
+        </div>
+        <div class="options-list">
+          ${optionsHtml}
+        </div>
+        <button class="submit-quiz-btn">SUBMIT ANSWER</button>
+      `;
+
+      // Wire option clicks
+      const opts = quizContent.querySelectorAll('.quiz-option');
+      opts.forEach(opt => {
+        opt.addEventListener('click', () => {
+          opts.forEach(o => {
+            o.classList.remove('active');
+            o.querySelector('.quiz-tag').classList.add('muted');
+            o.querySelector('.quiz-tag').innerText = 'SELECT';
+          });
+          opt.classList.add('active');
+          opt.querySelector('.quiz-tag').classList.remove('muted');
+          opt.querySelector('.quiz-tag').innerText = 'ACTIVE';
         });
       });
-
-      hintBtn.addEventListener("click", () => {
-        const visible = hintPanel.classList.toggle("visible");
-        hintBtn.textContent = visible ? "Hide Hint" : "Show Hint";
-      });
-
-      submitBtn.addEventListener("click", () => {
-        const selected = state.selections[key];
-        if (!selected) {
-          setStatus("Pick an option before submitting.", true);
-          return;
-        }
-
-        state.submitted[key] = true;
-        const correct = selected === question.correct_answer;
-
-        feedbackPanel.className = `feedback-panel visible ${correct ? "correct" : "wrong"}`;
-        feedbackPanel.textContent = correct
-          ? "Correct. Great work."
-          : `Not quite. Correct answer is ${question.correct_answer}.`;
-
-        rationalePanel.classList.add("visible");
-        setStatus(correct ? "Answer submitted: correct." : "Answer submitted: incorrect.");
-
-        if (state.currentIndex === state.questions.length - 1 && allQuestionsSubmitted()) {
-          renderResults();
+      
+      const submitBtn = quizContent.querySelector('.submit-quiz-btn');
+      submitBtn.addEventListener('click', () => {
+        const active = quizContent.querySelector('.quiz-option.active');
+        if(!active) return alert("Select an option first.");
+        
+        const letter = active.getAttribute('data-letter');
+        if (letter === mockQuestion.correct) {
+          alert("CORRECT! (Mock functionality)");
+        } else {
+          alert("INCORRECT. Correct was A. (Mock functionality)");
         }
       });
     }
 
-    prevBtn.addEventListener("click", () => {
-      if (state.currentIndex > 0) {
-        state.currentIndex -= 1;
-        renderCurrentQuestion();
-      }
-    });
-
-    nextBtn.addEventListener("click", () => {
-      if (state.currentIndex < state.questions.length - 1) {
-        state.currentIndex += 1;
-        renderCurrentQuestion();
-      } else if (allQuestionsSubmitted()) {
-        renderResults();
-      } else {
-        setStatus("Submit answers for all questions before viewing final results.", true);
-      }
-    });
-
-    endQuizBtn.addEventListener("click", () => {
-      if (confirm("Are you sure you want to end the quiz and view your results now?")) {
-        renderResults();
-      }
-    });
-
-    reviewQuizBtn.addEventListener("click", () => {
-      resultsWrap.classList.remove("visible");
-      quizWrap.classList.add("visible");
-      state.currentIndex = 0;
-      renderCurrentQuestion();
-      setStatus("Review mode: navigate your quiz answers.");
-    });
-
-    fileInput.addEventListener("change", (event) => {
-      const file = event.target.files?.[0];
-      if (file) uploadMarkdown(file);
-    });
-
-    uploadZone.addEventListener("dragover", (event) => {
-      event.preventDefault();
-      uploadZone.classList.add("dragover");
-    });
-
-    uploadZone.addEventListener("dragleave", () => {
-      uploadZone.classList.remove("dragover");
-    });
-
-    uploadZone.addEventListener("drop", (event) => {
-      event.preventDefault();
-      uploadZone.classList.remove("dragover");
-      const file = event.dataTransfer?.files?.[0];
-      if (file) {
-        fileInput.files = event.dataTransfer.files;
-        uploadMarkdown(file);
-      }
-    });
   </script>
 </body>
 </html>

@@ -7,10 +7,13 @@ A local web app that uploads a markdown quiz file and renders it as an interacti
 - instant correctness feedback
 - detailed rationale reveal
 
+The same site also includes a second page at `/study-guide-generator` for turning a URL into a structured study guide markdown file.
+It now also includes `/quiz-architect`, which builds the exact batch prompt used to generate a 10-question TestFlow quiz.
+
 ## Tech Stack
 
 - Backend: FastAPI (`main.py`)
-- Frontend: single-page HTML/CSS/Vanilla JS (`index.html`)
+- Frontend: HTML/CSS/Vanilla JS (`index.html`, `study-guide-generator.html`, and `quiz-architect.html`)
 - Local server: Uvicorn
 
 ## Run Locally via terminal
@@ -25,6 +28,8 @@ python main.py
 Open in browser:
 
 - `http://127.0.0.1:8000`
+- `http://127.0.0.1:8000/study-guide-generator`
+- `http://127.0.0.1:8000/quiz-architect`
 
 ## How To Use
 
@@ -37,6 +42,10 @@ Open in browser:
    - click `Submit Answer`
    - view correctness and rationale
    - navigate with `Previous` / `Next`
+
+The other pages work from the same navbar:
+- `Study Guide Generator` creates a structured study guide from a URL.
+- `Quiz Architect` builds the batch prompt for 10-question quiz generation.
 
 ## Accepted Markdown File Type
 
@@ -206,7 +215,9 @@ a total number of 30 questions and save the quiz in the same path. use your gene
 
 ## Project Files
 
-- `main.py`: FastAPI server and markdown parser
-- `index.html`: UI + interaction logic
+- `api/main.py`: FastAPI server, markdown parser, and study guide generator
+- `index.html`: Quiz player UI + interaction logic
+- `study-guide-generator.html`: URL-to-study-guide UI
+- `quiz-architect.html`: URL/text-to-quiz-prompt UI
 - `requirements.txt`: Python dependencies
 - `README.md`: usage and format guide
