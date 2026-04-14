@@ -152,13 +152,13 @@
       guideContent.innerHTML = ''; // clear
 
       const div = document.createElement('div');
-      div.className = 'card';
+      div.className = 'card study-guide-card';
       
       // We render the whole markdown using marked.js
       const rawHtml = marked.parse(data.markdown);
       
       div.innerHTML = `
-        <div class="card-body markdown-body" style="color: #e2e8f0; line-height: 1.6;">
+        <div class="card-body markdown-body">
             ${rawHtml}
         </div>
       `;
