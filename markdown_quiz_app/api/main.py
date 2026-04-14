@@ -645,20 +645,7 @@ def parse_quiz_markdown(markdown_text: str) -> List[QuizQuestion]:
     return questions
 
 
-@app.get("/")
-def serve_index() -> FileResponse:
-    index_path = Path(__file__).parent.parent / "index.html"
-    if not index_path.exists():
-        raise HTTPException(status_code=404, detail="index.html not found.")
-    return FileResponse(index_path)
 
-
-@app.get("/study-guide-generator")
-def serve_study_guide_generator() -> FileResponse:
-    page_path = Path(__file__).parent.parent / "study-guide-generator.html"
-    if not page_path.exists():
-        raise HTTPException(status_code=404, detail="study-guide-generator.html not found.")
-    return FileResponse(page_path)
 
 
 @app.post("/api/upload-quiz", response_model=ParsedQuiz)
