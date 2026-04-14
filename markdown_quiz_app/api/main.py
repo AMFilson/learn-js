@@ -302,7 +302,8 @@ def build_study_guide_markdown(url: str, subject: str, topic_override: Optional[
     content_excerpt = _render_source_excerpt(payload, "", limit_chars=35000)
 
     try:
-        model = genai.GenerativeModel("gemini-1.5-flash", system_instruction=STUDY_GUIDE_SYSTEM_PROMPT)
+        # Based on check_models.py, the correct string for Gemini 3.1 Flash Lite is 'gemini-3.1-flash-lite-preview'
+        model = genai.GenerativeModel("gemini-3.1-flash-lite-preview", system_instruction=STUDY_GUIDE_SYSTEM_PROMPT)
         prompt = f"Target Subject: {subject}\nTopic Override: {topic_title}\nSource URL: {url}\n\nCONTENT TO SYNTHESIZE:\n{content_excerpt}"
         
         response = model.generate_content(prompt)
@@ -367,7 +368,8 @@ def generate_ai_quiz(url: str, subject: str, topic_override: Optional[str]) -> P
     content_excerpt = _render_source_excerpt(payload, "", limit_chars=30000)
 
     try:
-        model = genai.GenerativeModel("gemini-1.5-flash", system_instruction=QUIZ_SYSTEM_PROMPT)
+        # Based on check_models.py, the correct string for Gemini 3.1 Flash Lite is 'gemini-3.1-flash-lite-preview'
+        model = genai.GenerativeModel("gemini-3.1-flash-lite-preview", system_instruction=QUIZ_SYSTEM_PROMPT)
         prompt = f"Please generate a 10-question technical quiz specifically about this content focusing on {topic_title}:\n\n{content_excerpt}"
         
         response = model.generate_content(prompt)
