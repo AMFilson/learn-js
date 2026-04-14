@@ -31,6 +31,10 @@ Open in browser:
 - `http://127.0.0.1:8000/study-guide-generator`
 - `http://127.0.0.1:8000/quiz-architect`
 
+Run locally from this folder with:
+
+- `python -m uvicorn api.main:app --reload`
+
 ## How To Use
 
 1. Start the app (`python main.py`).
