@@ -1,3 +1,7 @@
-.vercel
 __pycache__/
 *.pyc
+*.txt
+check_models.py
+.env
+.vercel/
+node_modules/
