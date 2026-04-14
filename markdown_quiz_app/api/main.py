@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections import Counter
 import html as html_module
+import os
 import re
 from pathlib import Path
 from typing import List, Optional
@@ -14,6 +15,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
+import google.generativeai as genai
+
+# Setup Gemini API (Make sure GOOGLE_API_KEY is in Vercel Env Vars)
+GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY")
+if GOOGLE_API_KEY:
+    genai.configure(api_key=GOOGLE_API_KEY)
 
 
 class QuizOption(BaseModel):
@@ -254,37 +261,71 @@ def _render_source_excerpt(payload: dict, source_text: str, limit_chars: int = 1
     return excerpt
 
 
-def _build_quiz_prompt_text(source_label: str, source_content: str, subject: str, topic_title: str, batch_start: int) -> str:
-    batch_end = batch_start + 9
-    batch_label = f"{batch_start}-{batch_end}"
-    fenced_source = source_content if source_content.strip() else "[No source text was provided.]"
-    fenced_source = fenced_source.replace("~~~", "~ ~ ~")
+STUDY_GUIDE_SYSTEM_PROMPT = """You are an expert technical writer and educator. Your task is to synthesize the provided web page content into a comprehensive, exam-ready Markdown study guide.
 
-    return f"""# Role: TestFlow Quiz Architect
-# Feature: High-Depth Technical Assessment Generator
+You MUST follow this exact document structure:
 
-## Objective
-Convert technical documentation (provided via URL or text) into a "Gold Standard" practice quiz for the TestFlow web platform (https://testflow-zeta.vercel.app/).
+# 📚 [Topic Title] — Exam Study Guide
+Source: [URL]
 
-## Operational Constraints
-1. **Batching:** Generate exactly 10 questions per request.
-2. **Technical Depth:** Every question must include a "Rationale" that explains the correct answer AND specifically why each distractor is incorrect/sub-optimal.
-3. **Format:** Use strict Markdown with HTML `<details>` tags for interactivity.
+## Executive Summary
+[Exactly 3 sentences: (1) what the page is about, (2) the central concept/mechanism, (3) the most important exam-critical takeaway.]
 
-## Input Data
-- **Topic/Source:** {source_label}
-- **Current Batch:** {batch_label}
+## Core Pillars
+[Create 6-12 pillars. Each pillar must use an `### [Number]. [Title]` heading. Prefer bullet points over paragraphs. Include any important code examples from the source in fenced code blocks.]
 
-## Source Material
-~~~text
-{fenced_source}
-~~~
+## Technical Deep-Dive
+[Provide a step-by-step logic walkthrough of the most complex mechanism. Include a setup, step-by-step narration, and output.]
 
-## Output Template (Strict Adherence)
-For every question, follow this exact structure:
+## Key Terminology Bank
+[Create a Markdown table with `| Term | Exam-Ready Definition |`. Include at least 15 terms found in the source.]
 
-### Question [Number]: [Sub-topic Title]
-[Provide a clear technical scenario or conceptual question.]
+## Watch Out For...
+[List at least 8 bullet points covering common misconceptions, default values, limitations, or traps. Format: `1. **[Trap Name]** — [Incorrect Assumption] — [Truth]`]
+
+## Active Recall — Check for Understanding
+[Provide exactly 5 questions: (1) Conceptual, (2) Code, (3) Contrast, (4) Prediction, (5) Integration.]
+
+## Answer Key
+[Provide full, comprehensive answers to the 5 Active Recall questions above.]
+
+Tone: Professional, concise, logically dense, no filler fluff. Bold critical keywords. NEVER deviate from this exact markdown heading structure.
+"""
+
+
+def build_study_guide_markdown(url: str, subject: str, topic_override: Optional[str]) -> StudyGuideResponse:
+    if not GOOGLE_API_KEY:
+        raise HTTPException(status_code=500, detail="GOOGLE_API_KEY environment variable is not configured.")
+
+    payload = _extract_page_payload(url)
+    topic_title = _pick_topic_title(payload, topic_override, subject, url)
+    content_excerpt = _render_source_excerpt(payload, "", limit_chars=35000)
+
+    try:
+        model = genai.GenerativeModel("gemini-3.1-flash-lite", system_instruction=STUDY_GUIDE_SYSTEM_PROMPT)
+        prompt = f"Target Subject: {subject}\nTopic Override: {topic_title}\nSource URL: {url}\n\nCONTENT TO SYNTHESIZE:\n{content_excerpt}"
+        
+        response = model.generate_content(prompt)
+        markdown = response.text.replace("```markdown", "").replace("```", "").strip() + "\n"
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Gemini API Error: {e}")
+
+    filename = f"{_slugify(subject)}_{_slugify(topic_title)}_study_guide.md"
+    return StudyGuideResponse(
+        source_url=url,
+        source_title=topic_title,
+        filename=filename,
+        markdown=markdown,
+    )
+
+
+QUIZ_SYSTEM_PROMPT = """You are TestFlow's Quiz Architect. Your task is to generate a high-depth practice quiz from the provided documentation.
+
+You must generate EXACTLY 10 questions.
+For EVERY question, you MUST follow this EXACT sequence and formatting natively:
+
+### Question [Number]: [Topic]
+[Scenario / Problem Description]
 
 - A) [Option]
 - B) [Option]
@@ -293,7 +334,7 @@ For every question, follow this exact structure:
 
 <details>
 <summary><b>Hint</b></summary>
-[Provide a conceptual nudge using technical terminology without revealing the answer.]
+[Provide a conceptual nudge without giving it away.]
 </details>
 
 <details>
@@ -302,203 +343,50 @@ For every question, follow this exact structure:
 **Correct Answer:** [Letter]
 
 **Rationale:**
-- **Why [Letter] is optimal:** [2-3 sentences using jargon like 'cascading,' 'idempotency,' or 'state management'.]
-- **Why [Incorrect Option 1] is wrong:** [Specific technical violation explanation.]
-- **Why [Incorrect Option 2] is wrong:** [Specific technical violation explanation.]
-- **Why [Incorrect Option 3] is wrong:** [Specific technical violation explanation.]
+- **Why [Correct Letter] is optimal:** [2-3 sentences of deep technical explanation.]
+- **Why [Incorrect Letter 1] is wrong:** [2-3 sentences explaining the technical violation.]
+- **Why [Incorrect Letter 2] is wrong:** [2-3 sentences explaining why it's suboptimal.]
+- **Why [Incorrect Letter 3] is wrong:** [2-3 sentences explaining why it fails.]
 </details>
 
 ---
 
-## Quality Guardrails
-- **No Surface-Level Content:** Do not use "All of the above" or "None of the above."
-- **Production-Ready:** Relate rationales to real-world performance, security, or accessibility (WCAG).
-- **Naming:** If providing a downloadable file, name it: `quiz_{_slugify(topic_title)}.md`.
-- **Formatting:** Ensure a blank line exists between `<summary>` and the rationale text to ensure proper Markdown rendering on the TestFlow frontend.
+CRITICAL RULES:
+- There must be a blank line between `</details>` and `---`.
+- There must be a blank line after the `<summary>` tags inside the `<details>` blocks before the actual content to ensure markdown parses correctly.
+- NEVER invent HTML attributes or functions that do not exist in the source context.
+- Your output must consist ONLY of the questions in this format, starting with `### Question 1:`.
 """
 
+def generate_ai_quiz(url: str, subject: str, topic_override: Optional[str]) -> ParsedQuiz:
+    if not GOOGLE_API_KEY:
+        raise HTTPException(status_code=500, detail="GOOGLE_API_KEY is not configured.")
 
-def build_quiz_prompt_markdown(
-    source_url: Optional[str],
-    source_text: Optional[str],
-    subject: str,
-    topic_override: Optional[str],
-    batch_start: int,
-) -> QuizPromptResponse:
-    has_url = bool(source_url and source_url.strip())
-    has_text = bool(source_text and source_text.strip())
-
-    if not has_url and not has_text:
-        raise HTTPException(status_code=400, detail="Provide either a source URL or pasted source text.")
-
-    payload = None
-    source_label = ""
-    source_content = ""
-    source_title = topic_override.strip() if topic_override and topic_override.strip() else ""
-
-    if has_url:
-        payload = _extract_page_payload(source_url.strip())
-        source_label = f"URL: {source_url.strip()}"
-        source_content = _render_source_excerpt(payload, source_text or "")
-        if not source_title:
-            source_title = _pick_topic_title(payload, topic_override, subject, source_url.strip())
-    else:
-        source_label = f"Text input for {subject}"
-        source_content = (source_text or "").strip()
-        source_title = source_title or f"{subject.title()} Topic"
-
-    if not source_title:
-        source_title = f"{subject.title()} Topic"
-
-    prompt_markdown = _build_quiz_prompt_text(source_label, source_content, subject, source_title, batch_start)
-    filename = f"quiz_{_slugify(source_title)}.md"
-    return QuizPromptResponse(
-        source_label=source_label,
-        source_title=source_title,
-        batch_range=f"{batch_start}-{batch_start + 9}",
-        filename=filename,
-        prompt_markdown=prompt_markdown,
-    )
-
-
-def build_study_guide_markdown(url: str, subject: str, topic_override: Optional[str]) -> StudyGuideResponse:
     payload = _extract_page_payload(url)
     topic_title = _pick_topic_title(payload, topic_override, subject, url)
-    key_phrases = _pick_key_phrases(payload, limit=18)
-    headings = payload["headings"] or [topic_title, "Core Concepts", "Common Pitfalls"]
-    code_samples = payload["code_samples"]
+    content_excerpt = _render_source_excerpt(payload, "", limit_chars=30000)
 
-    summary = [
-        f"This guide covers **{topic_title}** and distills the source page into exam-ready notes anchored to the page structure and wording.",
-        "It organizes the material into major themes, the mechanism behind them, and the terminology that is most likely to matter under time pressure.",
-        "Use it to review the structure first, then test yourself with the recall questions before trying to explain the topic from memory.",
-    ]
+    try:
+        model = genai.GenerativeModel("gemini-3.1-flash-lite", system_instruction=QUIZ_SYSTEM_PROMPT)
+        prompt = f"Please generate a 10-question technical quiz specifically about this content focusing on {topic_title}:\n\n{content_excerpt}"
+        
+        response = model.generate_content(prompt)
+        markdown_output = response.text.strip()
+        
+        # We run the LLM output through our own strict parser to guarantee the structure
+        questions = parse_quiz_markdown(markdown_output)
+        
+    except HTTPException as e:
+        # Re-raise parsing failures so the frontend gets them 
+        raise e 
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Gemini API or Parsing Error: {e}")
 
-    pillar_titles = []
-    for heading in headings:
-        if heading and heading not in pillar_titles:
-            pillar_titles.append(heading)
-        if len(pillar_titles) == 8:
-            break
-    fallback_pillars = [
-        "Purpose and scope",
-        "Core mechanism",
-        "Syntax and structure",
-        "Inputs and outputs",
-        "Rules and constraints",
-        "Common mistakes",
-        "Best-practice workflow",
-        "Review checklist",
-    ]
-    while len(pillar_titles) < 6:
-        pillar_titles.append(fallback_pillars[len(pillar_titles) % len(fallback_pillars)])
-
-    lines: List[str] = []
-    lines.append(f"# 📚 {topic_title} — Exam Study Guide")
-    lines.append(f"Source: [{url}]({url})")
-    lines.append("")
-    lines.append("## Executive Summary")
-    lines.append("")
-    for sentence in summary:
-        lines.append(sentence)
-    lines.append("")
-    lines.append("## Core Pillars")
-    lines.append("")
-    for idx, pillar in enumerate(pillar_titles[:8], start=1):
-        lines.append(f"### {idx}. {pillar}")
-        supporting = key_phrases[(idx - 1) * 2 : (idx - 1) * 2 + 2]
-        if supporting:
-            for phrase in supporting:
-                lines.append(f"- **{phrase}** appears in the source and deserves deliberate review.")
-        else:
-            lines.append("- Keep the main rule or concept in focus when reviewing this section.")
-
-        if code_samples and idx == 1:
-            language = _detect_code_language(code_samples[0])
-            lines.append(f"```{language}")
-            lines.append(code_samples[0].strip()[:1000] or "// sample code from source")
-            lines.append("```")
-        elif idx == 2 and len(code_samples) > 1:
-            language = _detect_code_language(code_samples[1])
-            lines.append(f"```{language}")
-            lines.append(code_samples[1].strip()[:1000] or "<!-- sample code from source -->")
-            lines.append("```")
-        lines.append("")
-
-    deep_dive_heading = pillar_titles[0] if pillar_titles else topic_title
-    lines.append("## Technical Deep-Dive")
-    lines.append("")
-    lines.append(f"### Step-by-Step Logic Walkthrough: {deep_dive_heading}")
-    lines.append("")
-    lines.append("1. **Input** — Identify the problem statement, page rule, or example pattern the source is trying to explain.")
-    lines.append("2. **Process** — Map the visible structure, the key attributes, or the sequence of operations that the page emphasizes.")
-    lines.append("3. **Output** — Confirm the final behavior, rendered result, or response that should appear when the mechanism is used correctly.")
-    if code_samples:
-        language = _detect_code_language(code_samples[-1])
-        lines.append("")
-        lines.append(f"```{language}")
-        lines.append(code_samples[-1].strip()[:1000] or "// representative example")
-        lines.append("```")
-    lines.append("")
-
-    lines.append("## Key Terminology Bank")
-    lines.append("")
-    lines.append("| Term | Meaning |")
-    lines.append("|---|---|")
-    term_pool = []
-    for phrase in key_phrases:
-        cleaned = phrase.strip()
-        if cleaned and cleaned not in term_pool:
-            term_pool.append(cleaned)
-    while len(term_pool) < 15:
-        term_pool.append(f"Core idea {len(term_pool) + 1}")
-    for term in term_pool[:15]:
-        lines.append(f"| **`{term}`** | Important source concept to remember during recall. |")
-    lines.append("")
-
-    lines.append("## Watch Out For...")
-    lines.append("")
-    traps = [
-        ("Surface reading", "Assuming the first visible heading is the whole topic", "Read the page structure, code, and supporting text together."),
-        ("Context loss", "Treating a rule as universal when it only applies in one example", "Check whether the source limits the rule to a specific case."),
-        ("Ignoring examples", "Skipping code blocks because the prose seems sufficient", "Code blocks usually carry the operational detail."),
-        ("Overgeneralizing", "Using one section to explain the entire page", "Separate the main pattern from the edge cases and exceptions."),
-        ("Missing constraints", "Thinking an implementation works even if a required attribute or step is omitted", "Constraints are part of the answer, not an optional detail."),
-        ("Wrong priority", "Putting memorization ahead of mechanism", "Learn the mechanism first so the details make sense."),
-        ("Terminology drift", "Using similar words as if they mean the same thing", "Use the page's exact language when possible."),
-        ("No review pass", "Assuming the first draft is enough for exam prep", "Use the recall questions and tighten weak spots before saving."),
-    ]
-    for name, wrong, truth in traps:
-        lines.append(f"- **{name}** — {wrong} — {truth}")
-    lines.append("")
-
-    lines.append("## Active Recall")
-    lines.append("")
-    questions = [
-        ("Conceptual", f"What is the core purpose of **{topic_title}** in the source material?"),
-        ("Code", "Which example code or structure from the page best demonstrates the main mechanism?"),
-        ("Contrast", "What changes when you compare the simplest path with the more complete or safer path?"),
-        ("Prediction", "If one key rule is removed, what outcome should you expect and why?"),
-        ("Integration", "How would you explain the topic to someone else using the page's vocabulary and examples?"),
-    ]
-    for idx, (kind, prompt) in enumerate(questions, start=1):
-        lines.append(f"{idx}. **{kind}** — {prompt}")
-    lines.append("")
-
-    lines.append("## Answer Key")
-    lines.append("")
-    for idx, (kind, prompt) in enumerate(questions, start=1):
-        lines.append(f"### {idx}. {kind}")
-        lines.append(f"Full marks answer: The source frames **{topic_title}** around the page's main headings, examples, and constraints, so a strong answer should describe the mechanism, mention at least one concrete example, and explain why the rule matters in practice.")
-        lines.append("")
-
-    markdown = "\n".join(lines).strip() + "\n"
-    filename = f"{_slugify(subject)}_{_slugify(topic_title)}_study_guide.md"
-    return StudyGuideResponse(
-        source_url=url,
-        source_title=topic_title,
-        filename=filename,
-        markdown=markdown,
+    filename = f"quiz_{_slugify(topic_title)}.md"
+    return ParsedQuiz(
+        source_file=filename,
+        question_count=len(questions),
+        questions=questions
     )
 
 
@@ -682,20 +570,19 @@ async def upload_quiz(file: UploadFile = File(...)) -> ParsedQuiz:
 
 @app.post("/api/generate-study-guide", response_model=StudyGuideResponse)
 async def generate_study_guide(request: StudyGuideRequest) -> StudyGuideResponse:
+    # Use the real AI logic instead of mock templates.
     return build_study_guide_markdown(request.url, request.subject, request.topic)
 
 
-@app.post("/api/generate-quiz-prompt", response_model=QuizPromptResponse)
-async def generate_quiz_prompt(request: QuizPromptRequest) -> QuizPromptResponse:
-    if request.batch_start < 1:
-        raise HTTPException(status_code=400, detail="Batch start must be 1 or greater.")
-    return build_quiz_prompt_markdown(
-        request.source_url,
-        request.source_text,
-        request.subject,
-        request.topic,
-        request.batch_start,
-    )
+# We redefine the Request model so the frontend can just send `{ url: "..." }`
+class BuildQuizRequest(BaseModel):
+    url: str
+    subject: str = "General"
+    topic: Optional[str] = None
+
+@app.post("/api/build-quiz-from-url", response_model=ParsedQuiz)
+async def build_quiz_from_url(request: BuildQuizRequest) -> ParsedQuiz:
+    return generate_ai_quiz(request.url, request.subject, request.topic)
 
 
 if __name__ == "__main__":

@@ -8,13 +8,15 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/index.css">
+  <!-- Markdown Parser for AI Output -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
 
   <!-- HEADER -->
   <header>
     <div class="header-left">
-      <div class="sub-brand">4-0 // ASSESSMENT PLATFORM</div>
+      <div class="sub-brand">AI Enhanced Learning Platform</div>
       <div class="brand">TESTFLOW_</div>
     </div>
     <div class="header-right">
@@ -27,7 +29,7 @@
   <section class="control-bar">
     <div class="url-input-group">
       <div class="url-label">SOURCE_URL</div>
-      <input type="text" id="urlInput" class="url-input" placeholder="Paste documentation or article link here..." value="https://react.dev/learn/synchronizing-with-effects">
+      <input type="text" id="urlInput" class="url-input" placeholder="Paste documentation or article link here..." value="https://developer.mozilla.org/en-US/docs/Learn_web_development/Core/Scripting/DOM_scripting">
     </div>
     <button class="btn btn-orange" id="btnGenerateGuide">GENERATE STUDY GUIDE</button>
     <button class="btn btn-purple" id="btnBuildQuiz" disabled>BUILD QUIZ</button>
@@ -82,33 +84,16 @@
     const quizContent = document.getElementById('quizContent');
     const quizCounter = document.getElementById('quizCounter');
 
-    // --- MOCK DATA ---
-    const mockGuideCards = [
-      {
-        num: 1, title: "THE PURPOSE OF EFFECTS", 
-        body: "Effects let you specify side effects that are caused by rendering itself, rather than by a particular event. Synchronizing a component with an external system (like a non-React widget, network connection, or browser DOM) is the primary use case."
-      },
-      {
-        num: 2, title: "DEPENDENCY ARRAYS", 
-        body: "React will skip re-running the Effect if every dependency you specify has the same value as it had during the previous render. An empty array [] means the Effect only runs after the initial mount."
-      }
-    ];
-
-    const mockQuestion = {
-      text: "WHEN DOES A CLEANUP FUNCTION EXECUTE IN USEEFFECT?",
-      options: [
-        { letter: "A", text: "Before the next effect runs" },
-        { letter: "B", text: "After the component unmounts" },
-        { letter: "C", text: "Only on browser refresh" }
-      ],
-      correct: "A"
-    };
+    // --- APP STATE ---
+    let activeQuizData = null;
+    let currentQuestionIndex = 0;
 
     // --- WORKFLOW LOGIC ---
 
     // 1. Generate Guide Flow
-    btnGenerateGuide.addEventListener('click', () => {
-      if (!urlInput.value) return alert("Please enter a URL first.");
+    btnGenerateGuide.addEventListener('click', async () => {
+      const url = urlInput.value.trim();
+      if (!url) return alert("Please enter a URL first.");
       
       sessionState.textContent = "EXTRACTING_DATA";
       btnGenerateGuide.disabled = true;
@@ -121,102 +106,163 @@
       processCard.className = 'card processing';
       processCard.innerHTML = `
         <div class="card-header">
-          <div class="circle-num">1</div>
-          <div class="card-title">ANALYZING SOURCE...</div>
+          <div class="circle-num">⌛</div>
+          <div class="card-title">ANALYZING SOURCE WITH GEMINI AI...</div>
         </div>
-        <div class="card-body">AI is parsing the document structure and identifying key pedagogical concepts...</div>
+        <div class="card-body">Extracting context and generating comprehensive study guide. This may take up to 25 seconds...</div>
       `;
       guideContent.appendChild(processCard);
 
-      // Fake Loading Delay
-      setTimeout(() => {
-        renderMockGuide();
-      }, 1500);
+      try {
+        const response = await fetch("/api/generate-study-guide", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ url: url, subject: "General" })
+        });
+        
+        if (!response.ok) {
+            const errCard = document.createElement('div');
+            errCard.className = 'card';
+            errCard.innerHTML = `<div class="card-body" style="color: #ff4444;">API Error: ${response.statusText}</div>`;
+            guideContent.innerHTML = '';
+            guideContent.appendChild(errCard);
+            btnGenerateGuide.disabled = false;
+            urlInput.disabled = false;
+            sessionState.textContent = "ERROR";
+            return;
+        }
+        
+        const data = await response.json();
+        renderGuide(data);
+      } catch (e) {
+          guideContent.innerHTML = `<div class="card"><div class="card-body" style="color: #ff4444;">Network Error: ${e.message}</div></div>`;
+          btnGenerateGuide.disabled = false;
+          urlInput.disabled = false;
+          sessionState.textContent = "ERROR";
+      }
     });
 
-    function renderMockGuide() {
+    function renderGuide(data) {
       sessionState.textContent = "GUIDE_READY";
-      guideIdText.textContent = "ID: SG_88291_A";
+      guideIdText.textContent = "ID: " + data.filename.toUpperCase();
       guideContent.innerHTML = ''; // clear
 
-      mockGuideCards.forEach(item => {
-        const div = document.createElement('div');
-        div.className = 'card';
-        div.innerHTML = `
-          <div class="card-header">
-            <div class="circle-num">${item.num}</div>
-            <div class="card-title">${item.title}</div>
-          </div>
-          <div class="card-body">${item.body}</div>
-        `;
-        guideContent.appendChild(div);
-      });
-
-      // Add a processing card at the end for authenticity
-      const processCard = document.createElement('div');
-      processCard.className = 'card processing';
-      processCard.innerHTML = `
-        <div class="card-header">
-          <div class="circle-num">3</div>
-          <div class="card-title">CLEANUP LOGIC</div>
+      const div = document.createElement('div');
+      div.className = 'card';
+      
+      // We render the whole markdown using marked.js
+      const rawHtml = marked.parse(data.markdown);
+      
+      div.innerHTML = `
+        <div class="card-body markdown-body" style="color: #e2e8f0; line-height: 1.6;">
+            ${rawHtml}
         </div>
-        <div class="card-body">AI is processing the cleanup function requirements and race condition handling for this section...</div>
       `;
-      guideContent.appendChild(processCard);
+      guideContent.appendChild(div);
 
       // Enable quiz generation
       btnBuildQuiz.disabled = false;
       btnGenerateGuide.disabled = false;
+      urlInput.disabled = false;
       btnGenerateGuide.textContent = "REGENERATE";
     }
 
     // 2. Build Quiz Flow
-    btnBuildQuiz.addEventListener('click', () => {
+    btnBuildQuiz.addEventListener('click', async () => {
+      const url = urlInput.value.trim();
       sessionState.textContent = "BUILDING_QUIZ";
       btnBuildQuiz.disabled = true;
       
       quizContent.innerHTML = `
-        <div style="font-family: var(--font-mono); color: #888; margin-top: 40px; text-align: center;">
-          [ SYNCING GUIDE DATA TO LLM GENERATOR... ]
+        <div class="card processing">
+            <div class="card-header">
+                <div class="circle-num">🧠</div>
+                <div class="card-title">GENERATING HIGH-DEPTH QUIZ...</div>
+            </div>
+            <div class="card-body">Gemini AI is crafting 10 complex questions and granular rationales. This takes around 20-30 seconds...</div>
         </div>
       `;
 
-      setTimeout(() => {
-        renderMockQuiz();
-      }, 1200);
+      try {
+        const response = await fetch("/api/build-quiz-from-url", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ url: url, subject: "General" })
+        });
+        
+        if (!response.ok) {
+            quizContent.innerHTML = `<div class="card-body" style="color: #ff4444;">API Error: ${response.statusText}</div>`;
+            btnBuildQuiz.disabled = false;
+            sessionState.textContent = "ERROR";
+            return;
+        }
+        
+        activeQuizData = await response.json();
+        currentQuestionIndex = 0;
+        renderQuizQuestion();
+      } catch (e) {
+          quizContent.innerHTML = `<div class="card-body" style="color: #ff4444;">Network Error: ${e.message}</div></div>`;
+          btnBuildQuiz.disabled = false;
+          sessionState.textContent = "ERROR";
+      }
     });
 
-    function renderMockQuiz() {
+    function renderQuizQuestion() {
+      if (!activeQuizData || !activeQuizData.questions || currentQuestionIndex >= activeQuizData.questions.length) {
+          sessionState.textContent = "QUIZ_COMPLETE";
+          quizContent.innerHTML = `<div class="card-body" style="text-align:center; margin-top:40px; font-family: var(--font-mono); color: #00ff00;">[ QUIZ COMPLETE ]</div>`;
+          return;
+      }
+      
       sessionState.textContent = "RECALL_ALPHA";
-      quizCounter.textContent = "02 / 10"; // Hardcoded to match mockup
+      const qNum = currentQuestionIndex + 1;
+      const totalQ = activeQuizData.questions.length;
+      quizCounter.textContent = `${qNum.toString().padStart(2, '0')} / ${totalQ.toString().padStart(2, '0')}`;
+      
       btnBuildQuiz.disabled = false;
       btnBuildQuiz.innerText = "REBUILD QUIZ";
 
+      const questionObj = activeQuizData.questions[currentQuestionIndex];
       let optionsHtml = '';
-      mockQuestion.options.forEach((opt, idx) => {
-        // Pre-select B just like the mockup image
-        const isActive = opt.letter === 'B'; 
-        const cls = isActive ? 'quiz-option active' : 'quiz-option';
-        const tagText = isActive ? 'ACTIVE' : 'SELECT';
-        const tagCls = isActive ? 'quiz-tag' : 'quiz-tag muted';
-
+      questionObj.options.forEach((opt) => {
         optionsHtml += `
-          <div class="${cls}" data-letter="${opt.letter}">
+          <div class="quiz-option" data-letter="${opt.letter}">
             <div class="quiz-option-text">${opt.letter}) ${opt.text}</div>
-            <div class="${tagCls}">${tagText}</div>
+            <div class="quiz-tag muted">SELECT</div>
           </div>
         `;
       });
 
+      const bodyHtml = marked.parse(questionObj.body_markdown);
+      
       quizContent.innerHTML = `
         <div class="quiz-question-box">
-          ${mockQuestion.text}
+          <h3 style="margin-top:0; color:#ff5500;">${questionObj.title || 'Question'}</h3>
+          ${bodyHtml}
         </div>
+        
+        <div id="hint-block" style="margin-top: 15px; margin-bottom: 15px; padding: 10px; background: rgba(255, 255, 255, 0.05); border-left: 3px solid #ffaa00; display:none; color: #a0aec0; font-family: var(--font-mono); font-size: 0.9rem;">
+            <strong>Hint:</strong> <span id="hint-text"></span>
+        </div>
+
         <div class="options-list">
           ${optionsHtml}
         </div>
-        <button class="submit-quiz-btn">SUBMIT ANSWER</button>
+        
+        <div id="rationale-block" style="margin-top: 20px; display:none; padding:20px; border: 2px dashed #333; background: #0a0a0a;">
+            <p style="font-family: var(--font-mono); color: #fff; margin-top:0;"><strong>Correct Answer:</strong> <span id="rat-correct" style="color:#00ff00; font-size: 1.2rem;"></span></p>
+            <div id="rat-text" style="color: #cbd5e1; line-height: 1.6; font-size: 0.95rem;"></div>
+        </div>
+
+        <button class="submit-quiz-btn" style="margin-top: 20px; margin-bottom: 5px;">SUBMIT ANSWER</button>
+        <button class="btn btn-purple" id="btnNextQuestion" style="display:none; width:100%; margin-top: 15px; border-radius: 4px;">NEXT QUESTION</button>
       `;
+
+      const hintText = quizContent.querySelector('#hint-text');
+      if (questionObj.hint_markdown) {
+          hintText.innerHTML = marked.parseInline(questionObj.hint_markdown);
+          quizContent.querySelector('#hint-block').style.display = 'block';
+      }
 
       // Wire option clicks
       const opts = quizContent.querySelectorAll('.quiz-option');
@@ -234,18 +280,60 @@
       });
       
       const submitBtn = quizContent.querySelector('.submit-quiz-btn');
+      const nextBtn = quizContent.querySelector('#btnNextQuestion');
+      const rationaleBlock = quizContent.querySelector('#rationale-block');
+      const ratCorrect = quizContent.querySelector('#rat-correct');
+      const ratText = quizContent.querySelector('#rat-text');
+
       submitBtn.addEventListener('click', () => {
         const active = quizContent.querySelector('.quiz-option.active');
         if(!active) return alert("Select an option first.");
         
         const letter = active.getAttribute('data-letter');
-        if (letter === mockQuestion.correct) {
-          alert("CORRECT! (Mock functionality)");
-        } else {
-          alert("INCORRECT. Correct was A. (Mock functionality)");
+        
+        // Disable further clicking
+        opts.forEach(o => o.style.pointerEvents = 'none');
+        submitBtn.style.display = 'none';
+        
+        // Show rationale
+        ratCorrect.textContent = questionObj.correct_answer;
+        
+        // Build rationale HTML
+        let rHTML = "<ul style='padding-left: 20px;'>";
+        if (questionObj.rationale) {
+            questionObj.rationale.forEach(r => {
+                 const prefix = r.letter ? `<strong>${r.letter})</strong> ` : "";
+                 rHTML += "<li style='margin-bottom:8px;'>" + prefix + marked.parseInline(r.text) + "</li>";
+            });
         }
+        rHTML += "</ul>";
+        ratText.innerHTML = rHTML;
+        
+        rationaleBlock.style.display = 'block';
+        
+        if (letter === questionObj.correct_answer) {
+            rationaleBlock.style.borderColor = '#00ff00';
+            active.style.borderColor = '#00ff00';
+        } else {
+            rationaleBlock.style.borderColor = '#ff4444';
+            active.style.borderColor = '#ff4444';
+            // Highlight the correct one too
+            opts.forEach(o => {
+                if (o.getAttribute('data-letter') === questionObj.correct_answer) {
+                    o.style.borderColor = '#00ff00';
+                }
+            });
+        }
+        
+        nextBtn.style.display = 'block';
+      });
+      
+      nextBtn.addEventListener('click', () => {
+          currentQuestionIndex++;
+          renderQuizQuestion();
       });
     }
+
 
   </script>
 </body>
