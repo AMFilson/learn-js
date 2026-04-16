@@ -391,6 +391,7 @@ header {
   width: 100%;
   height: 56px;
   background-color: var(--accent-orange);
+  color: #000000 !important;
   border: 1px solid var(--border-dark);
   font-family: var(--font-sans);
   font-weight: 800;
@@ -629,7 +630,7 @@ header {
   }
 
   /* Prevent markdown and card content from overflowing the screen */
-  .card, .quiz-question-box, .markdown-body {
+  .card, .quiz-question-box, .quiz-option, .markdown-body {
     width: 100%;
     max-width: 100%;
     padding: 16px;
