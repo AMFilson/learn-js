@@ -66,6 +66,14 @@ header {
   color: #A8D5BA;
   margin-bottom: 6px;
 }
+.header-right .user-id a {
+  color: inherit;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+.header-right .user-id a:hover {
+  color: #ffffff;
+}
 .header-right .session {
   color: var(--bg-white);
   font-weight: 700;
