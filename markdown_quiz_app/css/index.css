@@ -165,6 +165,7 @@ header {
   right: 0;
   background-color: var(--bg-white);
   border: 1px solid var(--border-dark);
+  min-width: max-content;
   width: 100%;
   z-index: 1000;
   display: none;

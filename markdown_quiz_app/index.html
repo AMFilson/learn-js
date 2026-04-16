@@ -36,7 +36,7 @@
 
     <!-- DOWNLOAD BUTTON -->
     <div class="download-container">
-      <button class="btn btn-green" id="btnDownload" style="min-width: 220px;" disabled>DOWNLOAD_</button>
+      <button class="btn btn-green" id="btnDownload" disabled>DOWNLOAD</button>
       <div class="dropdown-menu" id="downloadMenu">
         <div class="dropdown-item" id="downloadMD">EXPORT_AS .MD</div>
         <div class="dropdown-item" id="downloadPDF">EXPORT_AS .PDF</div>
@@ -191,7 +191,7 @@
       btnGenerateGuide.textContent = "REGENERATE";
     }
 
-    // --- DOWNLOAD_ EVENT HANDLERS ---
+    // --- DOWNLOAD EVENT HANDLERS ---
     btnDownload.addEventListener('click', (e) => {
       e.stopPropagation();
       downloadMenu.classList.toggle('show');
