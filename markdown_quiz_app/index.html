@@ -41,8 +41,8 @@
     <div class="download-container">
       <button class="btn btn-green" id="btnDownload" disabled aria-haspopup="true" aria-expanded="false">DOWNLOAD</button>
       <div class="dropdown-menu" id="downloadMenu" role="menu">
-        <div class="dropdown-item" id="downloadMD">EXPORT_AS .MD</div>
-        <div class="dropdown-item" id="downloadPDF">EXPORT_AS .PDF</div>
+        <div class="dropdown-item" id="downloadMD">EXPORT_GUIDE_AS .MD</div>
+        <div class="dropdown-item" id="downloadPDF">EXPORT_GUIDE_AS .PDF</div>
       </div>
     </div>
   </section>
@@ -472,7 +472,9 @@
             });
         }
         
+        submitBtn.style.display = 'none';
         nextBtn.style.display = 'block';
+
       });
       
       nextBtn.addEventListener('click', () => {
