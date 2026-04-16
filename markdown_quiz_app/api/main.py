@@ -555,10 +555,14 @@ def serve_index() -> FileResponse:
     return FileResponse(index_path)
 
 
-# Mount static files (externalized CSS)
+# Mount static files (Externalized CSS and Images)
 css_path = Path(__file__).parent.parent / "css"
 if css_path.exists():
     app.mount("/css", StaticFiles(directory=str(css_path)), name="css")
+
+images_path = Path(__file__).parent.parent / "images"
+if images_path.exists():
+    app.mount("/images", StaticFiles(directory=str(images_path)), name="images")
 
 
 @app.post("/api/upload-quiz", response_model=ParsedQuiz)
