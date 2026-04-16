@@ -490,7 +490,9 @@
           ratText.innerHTML = rHTML;
           rationaleBlock.style.display = 'block';
           opts.forEach(o => o.style.pointerEvents = 'none');
-           if (inReviewMode) {
+      };
+
+      if (inReviewMode) {
           populateReview();
           const result = userResults.find(r => r.qIdx === currentQuestionIndex);
           if (result && !result.isCorrect) {
@@ -499,6 +501,7 @@
               rationaleBlock.style.borderColor = '#00ff00';
           }
       }
+
 
       if (!skipSave) saveState();
 
