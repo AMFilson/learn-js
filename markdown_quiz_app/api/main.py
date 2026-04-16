@@ -547,6 +547,15 @@ def parse_quiz_markdown(markdown_text: str) -> List[QuizQuestion]:
 
 
 
+@app.get("/favicon.ico", include_in_schema=False)
+@app.get("/icon.ico", include_in_schema=False)
+async def serve_favicon():
+    icon_path = Path(__file__).parent.parent / "images" / "icon.ico"
+    if not icon_path.exists():
+        raise HTTPException(status_code=404, detail="Icon not found.")
+    return FileResponse(icon_path)
+
+
 @app.get("/")
 def serve_index() -> FileResponse:
     index_path = Path(__file__).parent.parent / "index.html"
