@@ -7,13 +7,13 @@ A local web app that uploads a markdown quiz file and renders it as an interacti
 - instant correctness feedback
 - detailed rationale reveal
 
-The same site also includes a second page at `/study-guide-generator` for turning a URL into a structured study guide markdown file.
-It now also includes `/quiz-architect`, which builds the exact batch prompt used to generate a 10-question TestFlow quiz.
+The site is a unified dashboard that handles both study guide generation and interactive quiz building from a single interface.
+It is live at: [https://testflow-zeta.vercel.app](https://testflow-zeta.vercel.app)
 
 ## Tech Stack
 
 - Backend: FastAPI (`main.py`)
-- Frontend: HTML/CSS/Vanilla JS (`index.html`, `study-guide-generator.html`, and `quiz-architect.html`)
+- Frontend: Unified Dashboard (`index.html`)
 - Local server: Uvicorn
 
 ## Run Locally via terminal
@@ -27,9 +27,7 @@ python main.py
 
 Open in browser:
 
-- `http://127.0.0.1:8000`
-- `http://127.0.0.1:8000/study-guide-generator`
-- `http://127.0.0.1:8000/quiz-architect`
+- `http://127.0.0.1:8000` (Home / Guide Generator / Quiz Builder)
 
 Run locally from this folder with:
 
@@ -47,9 +45,9 @@ Run locally from this folder with:
    - view correctness and rationale
    - navigate with `Previous` / `Next`
 
-The other pages work from the same navbar:
-- `Study Guide Generator` creates a structured study guide from a URL.
-- `Quiz Architect` builds the batch prompt for 10-question quiz generation.
+The dashboard provides a dual-column workflow:
+- **Left Column**: Generates and renders a structured study guide from a URL.
+- **Right Column**: Builds a high-depth interactive quiz based on the generated source.
 
 ## Accepted Markdown File Type
 
@@ -219,9 +217,7 @@ a total number of 30 questions and save the quiz in the same path. use your gene
 
 ## Project Files
 
-- `api/main.py`: FastAPI server, markdown parser, and study guide generator
-- `index.html`: Quiz player UI + interaction logic
-- `study-guide-generator.html`: URL-to-study-guide UI
-- `quiz-architect.html`: URL/text-to-quiz-prompt UI
+- `api/main.py`: FastAPI server, markdown parser, and AI generating endpoints
+- `index.html`: Unified Dashboard UI + persistence logic
 - `requirements.txt`: Python dependencies
 - `README.md`: usage and format guide

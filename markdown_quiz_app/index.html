@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>TESTFLOW_ // AI Enhanced Learning Platform</title>
+  <meta name="description" content="TestFlow: AI-Enhanced Learning Platform for generating study guides and high-depth interactive quizzes.">
+  <link rel="icon" href="/images/favicon.ico" type="image/x-icon">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
@@ -109,6 +111,51 @@
     let activeQuizData = null;
     let lastGuideData = null;
 
+    // --- PERSISTENCE ---
+    function saveState() {
+      const state = {
+        lastGuideData,
+        activeQuizData,
+        allSeenQuestions,
+        userResults,
+        currentQuestionIndex,
+        urlValue: urlInput.value,
+        inReviewMode
+      };
+      localStorage.setItem('testflow_v1_state', JSON.stringify(state));
+    }
+
+    function loadState() {
+      const saved = localStorage.getItem('testflow_v1_state');
+      if (saved) {
+        try {
+          const state = JSON.parse(saved);
+          lastGuideData = state.lastGuideData;
+          activeQuizData = state.activeQuizData;
+          allSeenQuestions = state.allSeenQuestions || [];
+          userResults = state.userResults || [];
+          currentQuestionIndex = state.currentQuestionIndex || 0;
+          inReviewMode = state.inReviewMode || false;
+          if (state.urlValue) urlInput.value = state.urlValue;
+
+          if (lastGuideData) {
+            renderGuide(lastGuideData, true); // true = skip save inside
+          }
+          if (activeQuizData) {
+            btnBuildQuiz.disabled = false;
+            // If user has results and not explicitly in sub-question review, show summary
+            if (userResults.length >= activeQuizData.questions.length && !inReviewMode) {
+                renderQuizSummary(true);
+            } else {
+                renderQuizQuestion(inReviewMode, true);
+            }
+          }
+        } catch (e) {
+          console.error("Persistence Load Error:", e);
+        }
+      }
+    }
+
     // --- WORKFLOW LOGIC ---
 
     // 1. Generate Guide Flow
@@ -170,17 +217,15 @@
       }
     });
 
-    function renderGuide(data) {
+    function renderGuide(data, skipSave = false) {
       sessionState.textContent = "GUIDE_READY";
       guideIdText.textContent = "ID: " + data.filename.toUpperCase();
       guideContent.innerHTML = ''; // clear
       lastGuideData = data; // Persist for download
-      allSeenQuestions = []; // Reset seen questions on new source
-
+      
       const div = document.createElement('div');
       div.className = 'card study-guide-card';
       
-      // We render the whole markdown using marked.js
       const rawHtml = marked.parse(data.markdown);
       
       div.innerHTML = `
@@ -190,12 +235,12 @@
       `;
       guideContent.appendChild(div);
 
-      // Enable quiz generation and downloads
       btnBuildQuiz.disabled = false;
       btnGenerateGuide.disabled = false;
       btnDownload.disabled = false;
       urlInput.disabled = false;
       btnGenerateGuide.textContent = "REGENERATE";
+      if (!skipSave) saveState();
     }
 
     // --- DOWNLOAD EVENT HANDLERS ---
@@ -302,9 +347,9 @@
 
     });
 
-    function renderQuizQuestion(forceReveal = false) {
+    function renderQuizQuestion(forceReveal = false, skipSave = false) {
       if (!activeQuizData || !activeQuizData.questions || currentQuestionIndex >= activeQuizData.questions.length) {
-          renderQuizSummary();
+          renderQuizSummary(skipSave);
           return;
       }
       
@@ -443,11 +488,8 @@
           ratText.innerHTML = rHTML;
           rationaleBlock.style.display = 'block';
           opts.forEach(o => o.style.pointerEvents = 'none');
-      };
-
-      if (inReviewMode) {
+           if (inReviewMode) {
           populateReview();
-          // Adjust summary row highlights in review mode
           const result = userResults.find(r => r.qIdx === currentQuestionIndex);
           if (result && !result.isCorrect) {
               rationaleBlock.style.borderColor = '#ff4444';
@@ -455,6 +497,8 @@
               rationaleBlock.style.borderColor = '#00ff00';
           }
       }
+
+      if (!skipSave) saveState();
 
       submitBtn.addEventListener('click', () => {
         const active = quizContent.querySelector('.quiz-option.active');
@@ -471,7 +515,6 @@
             rationaleBlock.style.borderColor = '#ff4444';
             active.style.borderColor = '#ff4444';
             userResults.push({ qIdx: currentQuestionIndex, userLetter: letter, isCorrect: false, title: questionObj.title, correctLetter: questionObj.correct_answer });
-            // Highlight the correct one too
             opts.forEach(o => {
                 if (o.getAttribute('data-letter') === questionObj.correct_answer) {
                     o.style.borderColor = '#00ff00';
@@ -481,7 +524,7 @@
         
         submitBtn.style.display = 'none';
         nextBtn.style.display = 'block';
-
+        saveState();
       });
       
       nextBtn.addEventListener('click', () => {
@@ -494,8 +537,9 @@
           }
       });
     }
+   }
 
-    function renderQuizSummary() {
+    function renderQuizSummary(skipSave = false) {
       sessionState.textContent = "QUIZ_RECAP";
       inReviewMode = false;
       const correctCount = userResults.filter(r => r.isCorrect).length;
@@ -564,7 +608,12 @@
       document.getElementById('btnNewSet').addEventListener('click', () => {
         btnBuildQuiz.click();
       });
+
+      if(!skipSave) saveState();
     }
+
+    // Initialize State
+    window.addEventListener('load', loadState);
 
 
   </script>

@@ -89,8 +89,8 @@ app.add_middleware(
 )
 
 
-QUESTION_HEADER_RE = re.compile(r"^###\s+Question\s+(\d+)\s*:\s*(.+)$", re.MULTILINE)
-OPTION_START_RE = re.compile(r"^\s*-\s*([A-D])\)\s*(.*)$", re.MULTILINE)
+QUESTION_HEADER_RE = re.compile(r"^###\s+Question\s+(\d+)\s*[:.]?\s*(.+)$", re.MULTILINE)
+OPTION_START_RE = re.compile(r"^\s*-\s*([A-D])[\).:]\s*(.*)$", re.MULTILINE)
 HINT_RE = re.compile(
     r"<details>\s*<summary>\s*<b>Hint</b>\s*</summary>(.*?)</details>",
     re.DOTALL,
@@ -101,7 +101,7 @@ ANSWER_BLOCK_RE = re.compile(
 )
 CORRECT_ANSWER_RE = re.compile(r"\*\*Correct Answer:\*\*\s*([A-D])")
 RATIONALE_SECTION_RE = re.compile(r"\*\*Rationale:\*\*\s*(.*)$", re.DOTALL)
-RATIONALE_LETTER_BULLET_RE = re.compile(r"^\s*-\s*([A-D])\)\s+(.+?)\s*$", re.MULTILINE)
+RATIONALE_LETTER_BULLET_RE = re.compile(r"^\s*-\s*([A-D])[\).:]\s+(.+?)\s*$", re.MULTILINE)
 RATIONALE_GENERIC_BULLET_RE = re.compile(r"^\s*-\s+(.+?)\s*$", re.MULTILINE)
 SPLIT_QUESTIONS_RE = re.compile(r"^\s*---\s*$", re.MULTILINE)
 TITLE_RE = re.compile(r"(?is)<title[^>]*>(.*?)</title>")
@@ -127,6 +127,8 @@ def _slugify(text: str) -> str:
 
 def _clean_text(value: str) -> str:
     value = html_module.unescape(value)
+    value = value.replace("\u00a0", " ") # Handle non-breaking spaces
+    value = SCRIPT_STYLE_RE.sub("", value) # Strip scripts and styles
     value = TAG_RE.sub(" ", value)
     value = re.sub(r"\s+", " ", value)
     return value.strip()
