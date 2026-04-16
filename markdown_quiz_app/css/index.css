@@ -611,7 +611,7 @@ header {
   }
   
   .col-left, .col-right {
-    padding: 16px;
+    padding: 12px;
     width: 100%;
   }
 
@@ -632,8 +632,15 @@ header {
   .card, .quiz-question-box, .markdown-body {
     width: 100%;
     max-width: 100%;
-    overflow-wrap: break-word;
+    padding: 16px;
+    overflow-wrap: anywhere;
     word-wrap: break-word;
+    word-break: break-all;
+  }
+
+  .markdown-body a {
+    word-break: break-all;
+    overflow-wrap: anywhere;
   }
 
   .markdown-body pre, 
@@ -647,6 +654,7 @@ header {
     max-width: 100%;
     height: auto;
   }
+
 }
 
 @media (max-width: 480px) {
@@ -665,3 +673,14 @@ html, body {
   width: 100%;
   position: relative;
 }
+
+@keyframes pulse {
+  0% { opacity: 0.7; }
+  50% { opacity: 1; }
+  100% { opacity: 0.7; }
+}
+
+.pulse {
+  animation: pulse 2s infinite ease-in-out;
+}
+

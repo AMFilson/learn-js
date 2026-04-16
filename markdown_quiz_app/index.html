@@ -144,14 +144,12 @@
         const data = await response.json();
         if (!response.ok) {
             const errorMsg = data.detail || response.statusText;
-            const errCard = document.createElement('div');
-            errCard.className = 'card';
-            errCard.innerHTML = `
-                <div class="card-header"><div class="circle-num" style="background:#ff4444;">!</div><div class="card-title" style="color:#ff4444;">API ERROR</div></div>
-                <div class="card-body" style="color: #ff4444; font-family: var(--font-mono); font-size: 0.85rem;">[ ERROR_LOG ]:<br>${errorMsg}</div>
+            guideContent.innerHTML = `
+                <div class="card">
+                    <div class="card-header"><div class="circle-num" style="background:#ff4444;">!</div><div class="card-title" style="color:#ff4444;">API ERROR</div></div>
+                    <div class="card-body" style="color: #ff4444; font-family: var(--font-mono); font-size: 0.85rem;">[ ERROR_LOG ]:<br>${errorMsg}</div>
+                </div>
             `;
-            guideContent.innerHTML = '';
-            guideContent.appendChild(errCard);
             btnGenerateGuide.disabled = false;
             urlInput.disabled = false;
             sessionState.textContent = "ERROR";
@@ -160,7 +158,12 @@
         
         renderGuide(data);
       } catch (e) {
-          guideContent.innerHTML = `<div class="card"><div class="card-body" style="color: #ff4444;">Network Error: ${e.message}</div></div>`;
+          guideContent.innerHTML = `
+            <div class="card">
+                <div class="card-header"><div class="circle-num" style="background:#ff4444;">!</div><div class="card-title" style="color:#ff4444;">NETWORK ERROR</div></div>
+                <div class="card-body" style="color: #ff4444; font-family: var(--font-mono); font-size: 0.85rem;">${e.message}</div>
+            </div>
+          `;
           btnGenerateGuide.disabled = false;
           urlInput.disabled = false;
           sessionState.textContent = "ERROR";
@@ -240,7 +243,7 @@
       btnBuildQuiz.disabled = true;
       
       quizContent.innerHTML = `
-        <div class="card processing">
+        <div class="card processing pulse">
             <div class="card-header">
                 <div class="circle-num">🧠</div>
                 <div class="card-title">GENERATING HIGH-DEPTH QUIZ...</div>
@@ -264,11 +267,9 @@
         if (!response.ok) {
             const errorMsg = data.detail || response.statusText;
             quizContent.innerHTML = `
-                <div class="quiz-question-box" style="background:#ffdddd; color:#aa0000; border-color:#aa0000;">
-                    SYSTEM ERROR: QUIZ GENERATION FAILED
-                </div>
-                <div class="card-body" style="color: #ff4444; font-family: var(--font-mono); font-size: 0.85rem;">
-                    [ ERROR_LOG ]:<br>${errorMsg}
+                <div class="card">
+                    <div class="card-header"><div class="circle-num" style="background:#ff4444;">!</div><div class="card-title" style="color:#ff4444;">API ERROR</div></div>
+                    <div class="card-body" style="color: #ff4444; font-family: var(--font-mono); font-size: 0.85rem;">[ ERROR_LOG ]:<br>${errorMsg}</div>
                 </div>
             `;
             btnBuildQuiz.disabled = false;
@@ -289,10 +290,16 @@
         
         renderQuizQuestion();
       } catch (e) {
-          quizContent.innerHTML = `<div class="card-body" style="color: #ff4444;">Network Error: ${e.message}</div>`;
+          quizContent.innerHTML = `
+            <div class="card">
+                <div class="card-header"><div class="circle-num" style="background:#ff4444;">!</div><div class="card-title" style="color:#ff4444;">NETWORK ERROR</div></div>
+                <div class="card-body" style="color: #ff4444; font-family: var(--font-mono); font-size: 0.85rem;">${e.message}</div>
+            </div>
+          `;
           btnBuildQuiz.disabled = false;
           sessionState.textContent = "ERROR";
       }
+
     });
 
     function renderQuizQuestion(forceReveal = false) {
