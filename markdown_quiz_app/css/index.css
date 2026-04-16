@@ -557,7 +557,8 @@ header {
   }
   
   .header-left .brand {
-    font-size: 2.5rem;
+    font-size: 2.2rem;
+    letter-spacing: -1px;
   }
   
   .header-right {
@@ -571,9 +572,15 @@ header {
     padding: 20px;
     gap: 12px;
   }
+
+  .download-container, .download-container .btn {
+    width: 100%;
+  }
   
   .workspace {
     grid-template-columns: 1fr;
+    width: 100%;
+    overflow-x: hidden;
   }
   
   .col-left {
@@ -582,6 +589,27 @@ header {
   }
   
   .col-left, .col-right {
-    padding: 20px;
+    padding: 16px;
+    width: 100%;
+  }
+
+  /* Prevent markdown and card content from overflowing the screen */
+  .card, .quiz-question-box, .markdown-body {
+    width: 100%;
+    max-width: 100%;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+  }
+
+  .markdown-body pre, 
+  .markdown-body table {
+    max-width: 100%;
+    overflow-x: auto;
+    display: block;
+  }
+  
+  .markdown-body img {
+    max-width: 100%;
+    height: auto;
   }
 }
