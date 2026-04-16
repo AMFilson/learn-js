@@ -30,7 +30,7 @@
   <!-- CONTROL BAR -->
   <section class="control-bar">
     <div class="url-input-group">
-      <div class="url-label">SOURCE_URL</div>
+      <label class="url-label" for="urlInput">SOURCE_URL</label>
       <input type="text" id="urlInput" class="url-input" placeholder="Paste documentation or article link here..." value="https://developer.mozilla.org/en-US/docs/Learn_web_development/Core/Scripting/DOM_scripting">
     </div>
 
@@ -39,8 +39,8 @@
 
         <!-- DOWNLOAD BUTTON -->
     <div class="download-container">
-      <button class="btn btn-green" id="btnDownload" disabled>DOWNLOAD</button>
-      <div class="dropdown-menu" id="downloadMenu">
+      <button class="btn btn-green" id="btnDownload" disabled aria-haspopup="true" aria-expanded="false">DOWNLOAD</button>
+      <div class="dropdown-menu" id="downloadMenu" role="menu">
         <div class="dropdown-item" id="downloadMD">EXPORT_AS .MD</div>
         <div class="dropdown-item" id="downloadPDF">EXPORT_AS .PDF</div>
       </div>
@@ -106,6 +106,8 @@
     let userResults = []; // Track { qIdx, userLetter, isCorrect }
     let allSeenQuestions = []; // Track titles to avoid repeats
     let inReviewMode = false; // Whether we are looking back at old answers
+    let activeQuizData = null;
+    let lastGuideData = null;
 
     // --- WORKFLOW LOGIC ---
 
@@ -196,11 +198,13 @@
     // --- DOWNLOAD EVENT HANDLERS ---
     btnDownload.addEventListener('click', (e) => {
       e.stopPropagation();
-      downloadMenu.classList.toggle('show');
+      const isExpanded = downloadMenu.classList.toggle('show');
+      btnDownload.setAttribute('aria-expanded', isExpanded);
     });
 
     document.addEventListener('click', () => {
       downloadMenu.classList.remove('show');
+      btnDownload.setAttribute('aria-expanded', 'false');
     });
 
     downloadMD.addEventListener('click', () => {
@@ -341,8 +345,16 @@
             <div id="rat-text" style="color: #cbd5e1; line-height: 1.6; font-size: 0.95rem;"></div>
         </div>
 
-        <button class="submit-quiz-btn" style="margin-top: 20px; margin-bottom: 5px;">SUBMIT ANSWER</button>
-        <button class="btn btn-purple" id="btnNextQuestion" style="display:none; width:100%; margin-top: 15px; border-radius: 4px;">NEXT QUESTION</button>
+        <div id="submission-actions" style="margin-top: 20px;">
+          <button class="submit-quiz-btn" style="margin-bottom: 5px;">SUBMIT ANSWER</button>
+          <button class="btn btn-purple" id="btnNextQuestion" style="display:none; width:100%; border-radius: 4px;">NEXT QUESTION</button>
+        </div>
+
+        <div class="quiz-nav-group" id="review-actions" style="display: none;">
+          <button class="btn btn-purple" id="btnReviewPrev">PREVIOUS QUESTION</button>
+          <button class="btn btn-green" id="btnReviewRecap" style="font-size: 0.8rem;">RETURN TO RECAP</button>
+          <button class="btn btn-purple" id="btnReviewNext">NEXT QUESTION</button>
+        </div>
       `;
 
       const hintText = quizContent.querySelector('#hint-text');
@@ -368,12 +380,24 @@
       
       const submitBtn = quizContent.querySelector('.submit-quiz-btn');
       const nextBtn = quizContent.querySelector('#btnNextQuestion');
+      const submissionActions = quizContent.querySelector('#submission-actions');
+      const reviewActions = quizContent.querySelector('#review-actions');
       
       if (inReviewMode) {
-          nextBtn.innerText = "RETURN TO RECAP";
-          nextBtn.style.display = 'block';
-          submitBtn.style.display = 'none';
+          submissionActions.style.display = 'none';
+          reviewActions.style.display = 'flex';
           
+          const btnPrev = document.getElementById('btnReviewPrev');
+          const btnNext = document.getElementById('btnReviewNext');
+          const btnRecap = document.getElementById('btnReviewRecap');
+          
+          btnPrev.disabled = (currentQuestionIndex === 0);
+          btnNext.disabled = (currentQuestionIndex === totalQ - 1);
+          
+          btnPrev.onclick = () => { currentQuestionIndex--; renderQuizQuestion(true); };
+          btnNext.onclick = () => { currentQuestionIndex++; renderQuizQuestion(true); };
+          btnRecap.onclick = () => { inReviewMode = false; renderQuizSummary(); };
+
           // Show results immediately
           const result = userResults.find(r => r.qIdx === currentQuestionIndex);
           if (result) {
@@ -396,35 +420,41 @@
       }
       
       const rationaleBlock = quizContent.querySelector('#rationale-block');
-      if (inReviewMode) rationaleBlock.style.display = 'block';
       const ratCorrect = quizContent.querySelector('#rat-correct');
       const ratText = quizContent.querySelector('#rat-text');
+
+      const populateReview = () => {
+          ratCorrect.textContent = questionObj.correct_answer;
+          let rHTML = "<ul style='padding-left: 20px;'>";
+          if (questionObj.rationale) {
+              questionObj.rationale.forEach(r => {
+                   const prefix = r.letter ? `<strong>${r.letter})</strong> ` : "";
+                   rHTML += "<li style='margin-bottom:8px;'>" + prefix + marked.parseInline(r.text || '') + "</li>";
+              });
+          }
+          rHTML += "</ul>";
+          ratText.innerHTML = rHTML;
+          rationaleBlock.style.display = 'block';
+          opts.forEach(o => o.style.pointerEvents = 'none');
+      };
+
+      if (inReviewMode) {
+          populateReview();
+          // Adjust summary row highlights in review mode
+          const result = userResults.find(r => r.qIdx === currentQuestionIndex);
+          if (result && !result.isCorrect) {
+              rationaleBlock.style.borderColor = '#ff4444';
+          } else {
+              rationaleBlock.style.borderColor = '#00ff00';
+          }
+      }
 
       submitBtn.addEventListener('click', () => {
         const active = quizContent.querySelector('.quiz-option.active');
         if(!active) return alert("Select an option first.");
         
         const letter = active.getAttribute('data-letter');
-        
-        // Disable further clicking
-        opts.forEach(o => o.style.pointerEvents = 'none');
-        submitBtn.style.display = 'none';
-        
-        // Show rationale
-        ratCorrect.textContent = questionObj.correct_answer;
-        
-        // Build rationale HTML
-        let rHTML = "<ul style='padding-left: 20px;'>";
-        if (questionObj.rationale) {
-            questionObj.rationale.forEach(r => {
-                 const prefix = r.letter ? `<strong>${r.letter})</strong> ` : "";
-                 rHTML += "<li style='margin-bottom:8px;'>" + prefix + marked.parseInline(r.text || '') + "</li>";
-            });
-        }
-        rHTML += "</ul>";
-        ratText.innerHTML = rHTML;
-        
-        rationaleBlock.style.display = 'block';
+        populateReview();
         
         if (letter === questionObj.correct_answer) {
             rationaleBlock.style.borderColor = '#00ff00';
