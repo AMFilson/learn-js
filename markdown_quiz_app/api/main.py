@@ -359,7 +359,7 @@ CRITICAL RULES:
 - Your output must consist ONLY of the questions in this format, starting with `### Question 1:`.
 """
 
-def generate_ai_quiz(url: str, subject: str, topic_override: Optional[str]) -> ParsedQuiz:
+def generate_ai_quiz(url: str, subject: str, topic_override: Optional[str], exclude_titles: List[str] = []) -> ParsedQuiz:
     if not GOOGLE_API_KEY:
         raise HTTPException(status_code=500, detail="GOOGLE_API_KEY is not configured.")
 
@@ -370,7 +370,12 @@ def generate_ai_quiz(url: str, subject: str, topic_override: Optional[str]) -> P
     try:
         # Based on check_models.py, the correct string for Gemini 3.1 Flash Lite is 'gemini-3.1-flash-lite-preview'
         model = genai.GenerativeModel("gemini-3.1-flash-lite-preview", system_instruction=QUIZ_SYSTEM_PROMPT)
-        prompt = f"Please generate a 10-question technical quiz specifically about this content focusing on {topic_title}:\n\n{content_excerpt}"
+        
+        exclude_clause = ""
+        if exclude_titles:
+            exclude_clause = f"\n\nCRITICAL CONSTRAINT: DO NOT generate questions that are identical or very similar to these previously used titles:\n- " + "\n- ".join(exclude_titles)
+
+        prompt = f"Please generate a 10-question technical quiz specifically about this content focusing on {topic_title}:{exclude_clause}\n\n{content_excerpt}"
         
         response = model.generate_content(prompt)
         markdown_output = response.text.strip()
@@ -581,10 +586,11 @@ class BuildQuizRequest(BaseModel):
     url: str
     subject: str = "General"
     topic: Optional[str] = None
+    exclude_titles: List[str] = []
 
 @app.post("/api/build-quiz-from-url", response_model=ParsedQuiz)
 async def build_quiz_from_url(request: BuildQuizRequest) -> ParsedQuiz:
-    return generate_ai_quiz(request.url, request.subject, request.topic)
+    return generate_ai_quiz(request.url, request.subject, request.topic, request.exclude_titles)
 
 
 if __name__ == "__main__":
