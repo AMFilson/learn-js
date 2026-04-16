@@ -630,7 +630,7 @@ header {
   }
 
   /* Prevent markdown and card content from overflowing the screen */
-  .card, .quiz-question-box, .quiz-option, .markdown-body {
+  .card, .quiz-question-box, .quiz-option, .quiz-rationale-box, .quiz-nav-group, .markdown-body {
     width: 100%;
     max-width: 100%;
     padding: 16px;
@@ -656,6 +656,12 @@ header {
     height: auto;
   }
 
+  .quiz-nav-group button {
+    font-size: 0.75rem !important;
+    padding: 8px 4px !important;
+    flex: 1;
+    min-width: 0;
+  }
 }
 
 @media (max-width: 480px) {
