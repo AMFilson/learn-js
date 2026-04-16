@@ -102,11 +102,10 @@
     const downloadPDF = document.getElementById('downloadPDF');
 
     // --- APP STATE ---
-    let activeQuizData = null;
-    let lastGuideData = null; // Store for downloads
     let currentQuestionIndex = 0;
     let userResults = []; // Track { qIdx, userLetter, isCorrect }
     let allSeenQuestions = []; // Track titles to avoid repeats
+    let inReviewMode = false; // Whether we are looking back at old answers
 
     // --- WORKFLOW LOGIC ---
 
@@ -292,11 +291,13 @@
       }
     });
 
-    function renderQuizQuestion() {
+    function renderQuizQuestion(forceReveal = false) {
       if (!activeQuizData || !activeQuizData.questions || currentQuestionIndex >= activeQuizData.questions.length) {
           renderQuizSummary();
           return;
       }
+      
+      if (forceReveal) inReviewMode = true;
       
       sessionState.textContent = "RECALL_ALPHA";
       const qNum = currentQuestionIndex + 1;
@@ -367,7 +368,35 @@
       
       const submitBtn = quizContent.querySelector('.submit-quiz-btn');
       const nextBtn = quizContent.querySelector('#btnNextQuestion');
+      
+      if (inReviewMode) {
+          nextBtn.innerText = "RETURN TO RECAP";
+          nextBtn.style.display = 'block';
+          submitBtn.style.display = 'none';
+          
+          // Show results immediately
+          const result = userResults.find(r => r.qIdx === currentQuestionIndex);
+          if (result) {
+              const userOpt = quizContent.querySelector(`.quiz-option[data-letter="${result.userLetter}"]`);
+              if (userOpt) {
+                  userOpt.classList.add('active');
+                  userOpt.querySelector('.quiz-tag').innerText = 'SELECTED';
+                  userOpt.style.borderColor = result.isCorrect ? '#00ff00' : '#ff4444';
+              }
+              // If wrong, highlight correct one too
+              if (!result.isCorrect) {
+                  const correctOpt = quizContent.querySelector(`.quiz-option[data-letter="${result.correctLetter}"]`);
+                  if (correctOpt) correctOpt.style.borderColor = '#00ff00';
+              }
+          }
+      } else {
+          if (currentQuestionIndex === totalQ - 1) {
+              nextBtn.innerText = "REVIEW QUIZ";
+          }
+      }
+      
       const rationaleBlock = quizContent.querySelector('#rationale-block');
+      if (inReviewMode) rationaleBlock.style.display = 'block';
       const ratCorrect = quizContent.querySelector('#rat-correct');
       const ratText = quizContent.querySelector('#rat-text');
 
@@ -417,13 +446,19 @@
       });
       
       nextBtn.addEventListener('click', () => {
-          currentQuestionIndex++;
-          renderQuizQuestion();
+          if (inReviewMode) {
+              inReviewMode = false;
+              renderQuizSummary();
+          } else {
+              currentQuestionIndex++;
+              renderQuizQuestion();
+          }
       });
     }
 
     function renderQuizSummary() {
       sessionState.textContent = "QUIZ_RECAP";
+      inReviewMode = false;
       const correctCount = userResults.filter(r => r.isCorrect).length;
       const totalCount = activeQuizData.questions.length;
       quizCounter.textContent = "COMPLETE";
@@ -457,12 +492,27 @@
         <div class="summary-actions" style="margin-bottom: 32px;">
           <button class="btn btn-orange" id="btnRestart">RESTART QUIZ</button>
           <button class="btn btn-purple" id="btnNewSet">NEW QUIZ</button>
+          <button class="btn btn-green" id="btnReviewAll" style="grid-column: span 2; margin-top: 10px;">REVIEW ALL QUESTIONS</button>
         </div>
 
         <div class="results-list">
           ${resultsHtml}
         </div>
       `;
+
+      // Wire up clicks for detailed review
+      const rows = quizContent.querySelectorAll('.result-row');
+      rows.forEach((row, idx) => {
+        row.addEventListener('click', () => {
+          currentQuestionIndex = idx;
+          renderQuizQuestion(true);
+        });
+      });
+
+      document.getElementById('btnReviewAll').addEventListener('click', () => {
+          currentQuestionIndex = 0;
+          renderQuizQuestion(true);
+      });
 
       // Restart: Just reset indices and results
       document.getElementById('btnRestart').addEventListener('click', () => {
