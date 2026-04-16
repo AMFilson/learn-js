@@ -151,6 +151,12 @@ header {
   color: var(--border-dark);
 }
 
+.btn-purple {
+  background-color: var(--accent-purple);
+  color: var(--border-dark);
+}
+
+
 .btn-green {
   background-color: var(--bg-dark);
   color: var(--bg-white);
