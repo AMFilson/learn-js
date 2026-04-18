@@ -256,7 +256,7 @@ header {
 /* MAIN WORKSPACE */
 .workspace {
   display: grid;
-  grid-template-columns: 1.8fr 1fr; /* roughly ~65% / 35% */
+  grid-template-columns: 2.2fr 1fr; /* Optimized for broader study guide view */
   flex: 1;
 }
 
