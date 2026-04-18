@@ -260,6 +260,45 @@ header {
   color: #7A8B8B;
 }
 
+.header-title-group {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.desktop-font-controls {
+  display: flex;
+  gap: 8px;
+}
+
+.font-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-weight: 800;
+  font-size: 1.2rem;
+  cursor: pointer;
+  border: 1px solid var(--border-dark);
+  transition: transform 0.1s;
+}
+
+.font-btn:active {
+  transform: translateY(2px);
+}
+
+.font-btn-decrease {
+  background-color: var(--accent-mint);
+  color: var(--border-dark);
+}
+
+.font-btn-increase {
+  background-color: var(--accent-orange);
+  color: var(--border-dark);
+}
+
 /* CARDS */
 .card {
   border: 1px solid var(--border-dark);
@@ -619,8 +658,12 @@ header {
   .section-header {
     flex-direction: column;
     align-items: flex-start;
-    gap: 8px;
+    gap: 12px;
     padding-bottom: 12px;
+  }
+
+  .desktop-font-controls {
+    display: none;
   }
 
   .section-meta {
