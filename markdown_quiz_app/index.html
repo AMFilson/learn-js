@@ -41,15 +41,15 @@
       <input type="text" id="urlInput" class="url-input" placeholder="Paste documentation or article link here..." value="https://developer.mozilla.org/en-US/docs/Learn_web_development/Core/Scripting/DOM_scripting">
     </div>
 
-    <button class="btn btn-orange" id="btnGenerateGuide">GENERATE STUDY GUIDE</button>
-    <button class="btn btn-purple" id="btnBuildQuiz" disabled>BUILD QUIZ</button>
+    <button class="btn btn-orange" id="btnGenerateGuide" title="Generate Study Guide">GENERATE STUDY GUIDE</button>
+    <button class="btn btn-purple" id="btnBuildQuiz" title="Build Quiz" disabled>BUILD QUIZ</button>
 
         <!-- DOWNLOAD BUTTON -->
     <div class="download-container">
-      <button class="btn btn-green" id="btnDownload" disabled aria-haspopup="true" aria-expanded="false">DOWNLOAD</button>
+      <button class="btn btn-green" id="btnDownload" title="Download Options" disabled aria-haspopup="true" aria-expanded="false">DOWNLOAD</button>
       <div class="dropdown-menu" id="downloadMenu" role="menu">
-        <div class="dropdown-item" id="downloadMD">EXPORT_GUIDE_AS .MD</div>
-        <div class="dropdown-item" id="downloadPDF">EXPORT_GUIDE_AS .PDF</div>
+        <div class="dropdown-item" id="downloadMD" title="Export as Markdown (.md)">EXPORT_GUIDE_AS .MD</div>
+        <div class="dropdown-item" id="downloadPDF" title="Export as PDF (.pdf)">EXPORT_GUIDE_AS .PDF</div>
       </div>
     </div>
   </section>
