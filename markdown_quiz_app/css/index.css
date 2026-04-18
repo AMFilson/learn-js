@@ -256,7 +256,7 @@ header {
 /* MAIN WORKSPACE */
 .workspace {
   display: grid;
-  grid-template-columns: 1.2fr 1fr; /* Reduced study guide footprint */
+  grid-template-columns: 1fr 1.5fr; /* Shifted divider to the left */
   flex: 1;
 }
 
