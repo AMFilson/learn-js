@@ -256,7 +256,7 @@ header {
 /* MAIN WORKSPACE */
 .workspace {
   display: grid;
-  grid-template-columns: 1.8fr 1fr; /* roughly ~65% / 35% */
+  grid-template-columns: 1.8fr 1fr; /* restored to reference commit */
   flex: 1;
 }
 
@@ -272,11 +272,10 @@ header {
 .section-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: center; /* kept centered for Firefox stability */
   border-bottom: 2px solid var(--border-dark);
-  padding-bottom: 12px;
+  padding-bottom: 8px; /* restored to reference commit */
   margin-bottom: 24px;
-  gap: 20px;
 }
 
 .section-header h2 {
@@ -304,8 +303,7 @@ header {
 .header-title-group {
   display: flex;
   align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
+  gap: 12px;
 }
 
 .edit-actions {
