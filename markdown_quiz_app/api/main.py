@@ -382,7 +382,13 @@ def generate_ai_quiz(url: Optional[str], subject: str, topic_override: Optional[
         
         exclude_clause = ""
         if exclude_titles:
-            exclude_clause = f"\n\nCRITICAL CONSTRAINT: DO NOT generate questions that are identical or very similar to these previously used titles:\n- " + "\n- ".join(exclude_titles)
+            formatted_excludes = []
+            for item in exclude_titles:
+                if isinstance(item, dict):
+                    formatted_excludes.append(f"Title: {item.get('title', '')} | Scenario: {item.get('description', '')}")
+                else:
+                    formatted_excludes.append(str(item))
+            exclude_clause = f"\n\nCRITICAL CONSTRAINT: DO NOT generate questions that are identical or very similar to these previously used topics and scenarios:\n- " + "\n- ".join(formatted_excludes)
 
         prompt = f"Please generate a 10-question technical quiz specifically about this content focusing on {topic_title}:{exclude_clause}\n\n{content_excerpt}"
         

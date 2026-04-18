@@ -489,7 +489,13 @@
         // Track these questions so we don't see them again in "New Quiz"
         if (data.questions) {
             data.questions.forEach(q => {
-                if (!allSeenQuestions.includes(q.title)) allSeenQuestions.push(q.title);
+                const isSeen = allSeenQuestions.some(seen => 
+                    (typeof seen === 'string' ? seen : seen.title) === q.title
+                );
+                if (!isSeen) {
+                    const descPreview = q.body_markdown ? q.body_markdown.substring(0, 150).replace(/\n/g, ' ').trim() : '';
+                    allSeenQuestions.push({ title: q.title, description: descPreview + '...' });
+                }
             });
         }
         
