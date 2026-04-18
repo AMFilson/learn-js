@@ -240,10 +240,11 @@ header {
 .section-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-end;
+  align-items: center;
   border-bottom: 2px solid var(--border-dark);
-  padding-bottom: 8px;
+  padding-bottom: 12px;
   margin-bottom: 24px;
+  gap: 20px;
 }
 
 .section-header h2 {
@@ -252,12 +253,20 @@ header {
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: -0.5px;
+  margin: 0;
+  white-space: nowrap;
 }
 
 .section-meta {
   font-family: var(--font-mono);
   font-size: 0.85rem;
   color: #7A8B8B;
+  text-align: right;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .header-title-group {
