@@ -313,6 +313,10 @@ header {
   border: 2px solid var(--border-dark);
 }
 
+.study-guide-card .card-body {
+  font-size: 1em; /* Allow inheritance for scaling */
+}
+
 .card.processing {
   border: 1px dashed var(--border-dark);
   background-color: transparent;
@@ -533,9 +537,9 @@ header {
   margin-bottom: 1rem;
   font-family: var(--font-mono);
 }
-.markdown-body h1 { font-size: 1.8rem; border-bottom: 1px solid #30363d; padding-bottom: 8px; }
-.markdown-body h2 { font-size: 1.4rem; border-bottom: 1px solid #30363d; padding-bottom: 4px; }
-.markdown-body h3 { font-size: 1.1rem; color: var(--accent-orange); }
+.markdown-body h1 { font-size: 1.8em; border-bottom: 1px solid #30363d; padding-bottom: 8px; }
+.markdown-body h2 { font-size: 1.4em; border-bottom: 1px solid #30363d; padding-bottom: 4px; }
+.markdown-body h3 { font-size: 1.1em; color: var(--accent-orange); }
 
 .markdown-body a { color: #58a6ff; text-decoration: none; }
 .markdown-body a:hover { text-decoration: underline; }
