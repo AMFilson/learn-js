@@ -10,11 +10,12 @@ from urllib.error import URLError, HTTPError
 from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
+import json
 import google.generativeai as genai
 
 # Setup Gemini API (Make sure GOOGLE_API_KEY is in Vercel Env Vars)
@@ -361,13 +362,19 @@ CRITICAL RULES:
 - Your output must consist ONLY of the questions in this format, starting with `### Question 1:`.
 """
 
-def generate_ai_quiz(url: str, subject: str, topic_override: Optional[str], exclude_titles: List[str] = []) -> ParsedQuiz:
+def generate_ai_quiz(url: Optional[str], subject: str, topic_override: Optional[str], exclude_titles: List[str] = [], source_text: Optional[str] = None) -> ParsedQuiz:
     if not GOOGLE_API_KEY:
         raise HTTPException(status_code=500, detail="GOOGLE_API_KEY is not configured.")
 
-    payload = _extract_page_payload(url)
-    topic_title = _pick_topic_title(payload, topic_override, subject, url)
-    content_excerpt = _render_source_excerpt(payload, "", limit_chars=30000)
+    if source_text:
+        topic_title = topic_override or f"{subject.title()} Study Guide"
+        content_excerpt = source_text[:30000]
+    else:
+        if not url:
+            raise HTTPException(status_code=400, detail="Either URL or source text must be provided.")
+        payload = _extract_page_payload(url)
+        topic_title = _pick_topic_title(payload, topic_override, subject, url)
+        content_excerpt = _render_source_excerpt(payload, "", limit_chars=30000)
 
     try:
         # Based on check_models.py, the correct string for Gemini 3.1 Flash Lite is 'gemini-3.1-flash-lite-preview'
@@ -596,16 +603,25 @@ async def generate_study_guide(request: StudyGuideRequest) -> StudyGuideResponse
     return build_study_guide_markdown(request.url, request.subject, request.topic)
 
 
-# We redefine the Request model so the frontend can just send `{ url: "..." }`
-class BuildQuizRequest(BaseModel):
-    url: str
-    subject: str = "General"
-    topic: Optional[str] = None
-    exclude_titles: List[str] = []
-
 @app.post("/api/build-quiz-from-url", response_model=ParsedQuiz)
-async def build_quiz_from_url(request: BuildQuizRequest) -> ParsedQuiz:
-    return generate_ai_quiz(request.url, request.subject, request.topic, request.exclude_titles)
+async def build_quiz_from_url(
+    url: Optional[str] = Form(None),
+    file: Optional[UploadFile] = File(None),
+    subject: str = Form("General"),
+    topic: Optional[str] = Form(None),
+    exclude_titles: str = Form("[]")
+) -> ParsedQuiz:
+    source_text = None
+    if file:
+        raw = await file.read()
+        source_text = raw.decode("utf-8", errors="ignore")
+    
+    try:
+        excludes = json.loads(exclude_titles)
+    except:
+        excludes = []
+
+    return generate_ai_quiz(url, subject, topic, excludes, source_text=source_text)
 
 
 if __name__ == "__main__":

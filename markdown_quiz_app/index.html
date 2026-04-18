@@ -36,9 +36,14 @@
 
   <!-- CONTROL BAR -->
   <section class="control-bar">
-    <div class="url-input-group">
-      <label class="url-label" for="urlInput">SOURCE_URL</label>
-      <input type="text" id="urlInput" class="url-input" placeholder="Paste documentation or article link here..." value="https://developer.mozilla.org/en-US/docs/Learn_web_development/Core/Scripting/DOM_scripting">
+    <div class="url-input-group" id="inputContainer">
+      <label class="url-label" for="urlInput" id="sourceLabel">SOURCE_URL</label>
+      <div class="upload-toggle">
+        <label for="fileUpload" class="upload-icon-btn" title="Upload Markdown File">📎</label>
+        <input type="file" id="fileUpload" accept=".md" style="display:none;">
+      </div>
+      <input type="text" id="urlInput" class="url-input" placeholder="Paste link or drop .md file here..." value="https://developer.mozilla.org/en-US/docs/Learn_web_development/Core/Scripting/DOM_scripting">
+      <button class="clear-upload-btn" id="btnClearUpload" title="Return to URL Mode">✕</button>
     </div>
 
     <button class="btn btn-orange" id="btnGenerateGuide" title="Generate Study Guide">GENERATE STUDY GUIDE</button>
@@ -68,6 +73,9 @@
           </div>
         </div>
         <div class="section-meta" id="guideIdText">ID: PENDING</div>
+        <div class="edit-actions">
+           <button class="btn-edit-toggle" id="btnToggleEdit" style="display:none;">Edit Mode</button>
+        </div>
       </div>
       
       <div id="guideContent">
@@ -76,6 +84,7 @@
           [ WAITING FOR SOURCE URL ]
         </div>
       </div>
+      <textarea id="guideEditArea" class="guide-edit-area" placeholder="Edit markdown here..."></textarea>
     </div>
 
     <!-- RIGHT: ACTIVE QUIZ -->
@@ -117,7 +126,17 @@
     const btnDecreaseFont = document.getElementById('btnDecreaseFont');
     const btnIncreaseFont = document.getElementById('btnIncreaseFont');
 
+    const inputContainer = document.getElementById('inputContainer');
+    const fileUpload = document.getElementById('fileUpload');
+    const btnClearUpload = document.getElementById('btnClearUpload');
+    const sourceLabel = document.getElementById('sourceLabel');
+    const btnToggleEdit = document.getElementById('btnToggleEdit');
+    const guideEditArea = document.getElementById('guideEditArea');
+
     // --- APP STATE ---
+    let inputMode = 'url'; // 'url' or 'file'
+    let uploadedFile = null;
+    let isEditing = false;
     let currentQuestionIndex = 0;
     let userResults = []; // Track { qIdx, userLetter, isCorrect }
     let allSeenQuestions = []; // Track titles to avoid repeats
@@ -136,7 +155,9 @@
         currentQuestionIndex,
         urlValue: urlInput.value,
         inReviewMode,
-        currentFontScale
+        currentFontScale,
+        inputMode,
+        lastGuideData
       };
       localStorage.setItem('testflow_v1_state', JSON.stringify(state));
     }
@@ -153,10 +174,15 @@
           currentQuestionIndex = state.currentQuestionIndex || 0;
           inReviewMode = state.inReviewMode || false;
           currentFontScale = state.currentFontScale || 1.0;
+          inputMode = state.inputMode || 'url';
           if (state.urlValue) urlInput.value = state.urlValue;
 
+          if (inputMode === 'file' && lastGuideData) {
+              setFileModeUI(lastGuideData.filename);
+          }
+
           if (lastGuideData) {
-            renderGuide(lastGuideData, true); // true = skip save inside
+            renderGuide(lastGuideData, true); 
             applyFontScale();
           }
           if (activeQuizData) {
@@ -176,8 +202,90 @@
 
     // --- WORKFLOW LOGIC ---
 
+    // --- DUAL SOURCE LOGIC ---
+    function setFileModeUI(filename) {
+        inputMode = 'file';
+        sourceLabel.textContent = 'SOURCE_FILE';
+        urlInput.value = filename;
+        urlInput.disabled = true;
+        btnClearUpload.style.display = 'block';
+        inputContainer.classList.remove('drag-active');
+    }
+
+    function clearUpload() {
+        inputMode = 'url';
+        uploadedFile = null;
+        sourceLabel.textContent = 'SOURCE_URL';
+        urlInput.value = '';
+        urlInput.disabled = false;
+        btnClearUpload.style.display = 'none';
+        btnToggleEdit.style.display = 'none';
+        saveState();
+    }
+
+    btnClearUpload.addEventListener('click', clearUpload);
+
+    fileUpload.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) handleFile(file);
+    });
+
+    function handleFile(file) {
+        if (!file.name.endsWith('.md')) return alert("Please upload a .md file.");
+        uploadedFile = file;
+        
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const content = e.target.result;
+            const mockData = {
+                source_url: "LOCAL_FILE",
+                source_title: file.name.replace('.md', ''),
+                filename: file.name,
+                markdown: content
+            };
+            setFileModeUI(file.name);
+            renderGuide(mockData);
+        };
+        reader.readAsText(file);
+    }
+
+    // Drag and Drop
+    inputContainer.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        inputContainer.classList.add('drag-active');
+    });
+    inputContainer.addEventListener('dragleave', () => {
+        inputContainer.classList.remove('drag-active');
+    });
+    inputContainer.addEventListener('drop', (e) => {
+        e.preventDefault();
+        const file = e.dataTransfer.files[0];
+        if (file) handleFile(file);
+    });
+
+    // Edit Mode Toggle
+    btnToggleEdit.addEventListener('click', () => {
+        isEditing = !isEditing;
+        if (isEditing) {
+            btnToggleEdit.textContent = "Save Changes";
+            btnToggleEdit.classList.add('active');
+            guideEditArea.value = lastGuideData.markdown;
+            guideContent.style.display = 'none';
+            guideEditArea.style.display = 'block';
+        } else {
+            btnToggleEdit.textContent = "Edit Mode";
+            btnToggleEdit.classList.remove('active');
+            lastGuideData.markdown = guideEditArea.value;
+            renderGuide(lastGuideData); // Re-render with new content
+            guideEditArea.style.display = 'none';
+            guideContent.style.display = 'block';
+        }
+    });
+
     // 1. Generate Guide Flow
     btnGenerateGuide.addEventListener('click', async () => {
+      if (inputMode === 'file') return; // In file mode, rendering is instant on upload.
+
       const url = urlInput.value.trim();
       if (!url) return alert("Please enter a URL first.");
       
@@ -282,7 +390,8 @@
       btnBuildQuiz.disabled = false;
       btnGenerateGuide.disabled = false;
       btnDownload.disabled = false;
-      urlInput.disabled = false;
+      urlInput.disabled = (inputMode === 'file');
+      btnToggleEdit.style.display = 'block';
       btnGenerateGuide.textContent = "REGENERATE";
       if (!skipSave) saveState();
       applyFontScale();
@@ -343,14 +452,20 @@
       `;
 
       try {
+        const formData = new FormData();
+        if (inputMode === 'file' || (lastGuideData && lastGuideData.source_url === "LOCAL_FILE")) {
+            // Send the current markdown (could be edited) as a file
+            const blob = new Blob([lastGuideData.markdown], { type: 'text/markdown' });
+            formData.append('file', blob, lastGuideData.filename || 'uploaded.md');
+        } else {
+            formData.append('url', url);
+        }
+        formData.append('subject', "General");
+        formData.append('exclude_titles', JSON.stringify(allSeenQuestions));
+
         const response = await fetch("/api/build-quiz-from-url", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ 
-                url: url, 
-                subject: "General", 
-                exclude_titles: allSeenQuestions 
-            })
+            body: formData
         });
         
         const data = await response.json();

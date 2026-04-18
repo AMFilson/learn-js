@@ -94,6 +94,38 @@ header {
   border: 1px solid var(--border-dark);
   background: var(--bg-white);
   height: 48px;
+  transition: all 0.2s ease;
+}
+
+.url-input-group.drag-active {
+  border: 2px dashed var(--border-dark);
+  background-color: var(--accent-mint);
+}
+
+.upload-toggle {
+  display: flex;
+  align-items: center;
+}
+
+.upload-icon-btn {
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  font-size: 1.4rem;
+}
+
+.clear-upload-btn {
+  background: transparent;
+  border: none;
+  color: #ff4444;
+  font-weight: 800;
+  cursor: pointer;
+  padding: 0 16px;
+  font-family: var(--font-mono);
+  display: none;
 }
 
 .url-label {
@@ -273,6 +305,27 @@ header {
   display: flex;
   align-items: center;
   gap: 16px;
+  flex-wrap: wrap;
+}
+
+.edit-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-edit-toggle {
+  background-color: var(--bg-white);
+  border: 1px solid var(--border-dark);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  padding: 4px 10px;
+  cursor: pointer;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.btn-edit-toggle.active {
+  background-color: var(--accent-orange);
 }
 
 .desktop-font-controls {
@@ -324,6 +377,21 @@ header {
 
 .study-guide-card .card-body {
   font-size: 1em; /* Allow inheritance for scaling */
+}
+
+.guide-edit-area {
+  width: 100%;
+  min-height: 600px;
+  background-color: #0d1117;
+  color: #e2e8f0;
+  border: 2px solid var(--border-dark);
+  padding: 24px;
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  line-height: 1.6;
+  resize: vertical;
+  outline: none;
+  display: none;
 }
 
 .card.processing {
